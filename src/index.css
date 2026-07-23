@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-astro-orange: #FA5A24;
+  --color-astro-dark-orange: #E14614;
+  --color-astro-peach: #FFF2EC;
+  --color-astro-bg: #FCFAF8;
+  --color-astro-dark: #1E293B;
+
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+}
+
+/* Custom styles for layout, scrollbars, or animations if needed */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
