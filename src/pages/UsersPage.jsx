@@ -368,7 +368,8 @@ const UsersPage = () => {
 
             return {
               id: user._id || idx,
-              name: `${user.firstname || ''} ${user.lastname || ''}`.trim() || 'Unnamed User',
+              name: user.name || `${user.firstname || ''} ${user.lastname || ''}`.trim() || 'Unnamed User',
+              uniqueId: user.uniqueId || 'N/A',
               mobile: user.phone || 'N/A',
               email: user.email || 'N/A',
               wallet: '₹' + (user.walletBalance ?? 0).toFixed(2),
@@ -492,7 +493,8 @@ const UsersPage = () => {
     return (
       user.name.toLowerCase().includes(query) ||
       user.email.toLowerCase().includes(query) ||
-      user.mobile.includes(query)
+      user.mobile.includes(query) ||
+      (user.uniqueId && user.uniqueId.toLowerCase().includes(query))
     );
   });
 
@@ -621,7 +623,10 @@ const UsersPage = () => {
                           alt={user.name} 
                           className="w-8 h-8 rounded-full object-cover border border-slate-100"
                         />
-                        <span className="font-bold text-slate-800">{user.name}</span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800 leading-tight">{user.name}</span>
+                          <span className="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5">{user.uniqueId}</span>
+                        </div>
                       </td>
                       <td className="py-3.5 font-medium text-slate-500">{user.mobile}</td>
                       <td className="py-3.5 font-medium text-slate-500">{user.email}</td>
@@ -726,8 +731,8 @@ const UsersPage = () => {
                   className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-md flex-shrink-0"
                 />
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <h4 className="font-extrabold text-slate-800 text-base leading-tight">{selectedUser.name}</h4>
                     <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold ${
                       selectedUser.status === 'Active' 
@@ -738,6 +743,10 @@ const UsersPage = () => {
                     }`}>
                       {selectedUser.status}
                     </span>
+                  </div>
+                  
+                  <div className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold w-max mb-3 tracking-wider">
+                    ID: {selectedUser.uniqueId}
                   </div>
 
                   {/* Details list */}
