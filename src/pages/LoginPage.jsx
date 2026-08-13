@@ -54,7 +54,7 @@ export default function LoginPage() {
 
     try {
       const cleanUsername = username.trim();
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/login`, {
         method: "POST",
         headers: {
