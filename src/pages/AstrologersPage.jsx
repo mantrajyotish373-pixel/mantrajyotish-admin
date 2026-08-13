@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -278,6 +279,47 @@ const AstrologersPage = () => {
 
   const [interviewStatuses, setInterviewStatuses] = useState({});
 
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'confirm',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    onConfirm: null,
+    onCancel: null,
+    showCancel: true
+  });
+
+  const showAlert = (message, title = 'Notification', type = 'info') => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText: 'OK',
+      showCancel: false,
+      onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  const showConfirm = (message, onConfirmCallback, title = 'Confirm Action', type = 'warning', confirmText = 'Confirm') => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onConfirmCallback) onConfirmCallback();
+      },
+      onCancel: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, location.pathname, itemsPerPage]);
@@ -349,23 +391,11 @@ const AstrologersPage = () => {
     });
   };
 
-  const handleVerifyStatusChange = (astro, statusVal) => {
-    if (!astro || !astro.email) {
-      alert('Astrologer email is missing. Cannot change status.');
-      return;
-    }
-
-    const confirmMsg = statusVal === 'approved'
-      ? `Approve "${astro.name || astro.email}"? They will be able to log in and start consultations.`
-      : `Block/Reject "${astro.name || astro.email}"? This will prevent them from accessing the platform.`;
-    if (!window.confirm(confirmMsg)) return;
-
+  const executeStatusChange = (astro, statusVal) => {
     const token = localStorage.getItem('authToken');
     setIsLoading(true);
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
 
-    // Use interview pass/fail endpoints — they atomically update both the interview record
-    // AND the astrologer's status (approved/rejected) in the database.
     const interviewEndpoint = statusVal === 'approved'
       ? `${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass`
       : `${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail`;
@@ -386,7 +416,7 @@ const AstrologersPage = () => {
       .then(json => {
         setIsLoading(false);
         if (json.success) {
-          alert(`Astrologer successfully ${statusVal === 'approved' ? '✅ Approved' : '❌ Blocked'}!`);
+          showAlert(`Astrologer successfully ${statusVal === 'approved' ? 'Approved' : 'Blocked'}!`, 'Success', 'success');
           fetchAstrologers();
           if (selectedAstro && selectedAstro.id === astro.id) {
             setSelectedAstro(prev => ({
@@ -411,20 +441,40 @@ const AstrologersPage = () => {
             .then(r => r.json().catch(() => ({})))
             .then(j => {
               if (j.success) {
-                alert(`Astrologer successfully ${statusVal === 'approved' ? '✅ Approved' : '❌ Blocked'}!`);
+                showAlert(`Astrologer successfully ${statusVal === 'approved' ? 'Approved' : 'Blocked'}!`, 'Success', 'success');
                 fetchAstrologers();
               } else {
-                alert(j.message || json.message || `${statusVal} action failed.`);
+                showAlert(j.message || json.message || `${statusVal} action failed.`, 'Action Failed', 'danger');
               }
             });
         }
       })
       .catch(err => {
         setIsLoading(false);
-
         console.error(err);
-        alert(err.message || `Error occurred while trying to ${statusVal} astrologer.`);
+        showAlert(err.message || `Error occurred while trying to ${statusVal} astrologer.`, 'Error', 'danger');
       });
+  };
+
+  const handleVerifyStatusChange = (astro, statusVal) => {
+    const identifier = astro?.email || astro?._id || astro?.id;
+    if (!astro || !identifier) {
+      showAlert('Astrologer details are missing. Cannot change status.', 'Error', 'danger');
+      return;
+    }
+
+    const isApprove = statusVal === 'approved';
+    const confirmMsg = isApprove
+      ? `Approve "${astro.name || astro.email}"? They will be able to log in and start consultations.`
+      : `Block/Reject "${astro.name || astro.email}"? This will prevent them from accessing the platform.`;
+
+    showConfirm(
+      confirmMsg,
+      () => executeStatusChange(astro, statusVal),
+      isApprove ? 'Approve Astrologer' : 'Block / Reject Astrologer',
+      isApprove ? 'success' : 'danger',
+      isApprove ? 'Yes, Approve' : 'Yes, Block'
+    );
   };
 
   const defaultAstroDetails = {
@@ -510,6 +560,8 @@ const AstrologersPage = () => {
 
           return {
             id: item._id || idx,
+            _id: item._id,
+            email: item.email || (item.astrologerLogin ? item.astrologerLogin.email : ''),
             name: item.name || 'Unnamed Astrologer',
             skill: formatSkills(item.skills, item.specialization || item.strengths),
             experience: (item.experience ?? 5) + ' Years',
@@ -1315,18 +1367,17 @@ const AstrologersPage = () => {
         if (json.success) {
           const payload = { date, time, platform, meetingLink: meetingLink.trim(), notes: notes.trim() };
           localStorage.setItem('interview_schedule_' + selectedAstro.id, JSON.stringify(payload));
-          
-          alert('Interview scheduled successfully on live database!');
+          showAlert('Interview scheduled successfully!', 'Schedule Saved', 'success');
           fetchAstrologers();
           if (onClose) onClose();
         } else {
-          alert(json.message || 'Failed to update schedule.');
+          showAlert(json.message || 'Failed to update schedule.', 'Schedule Failed', 'danger');
         }
       })
       .catch(err => {
         setIsLoading(false);
         console.error(err);
-        alert(err.message || 'Error occurred while saving schedule.');
+        showAlert(err.message || 'Error occurred while saving schedule.', 'Error', 'danger');
       });
     };
 
@@ -1573,7 +1624,8 @@ const AstrologersPage = () => {
   };
 
   return (
-    <Routes>
+    <>
+      <Routes>
       {/* List routes */}
       <Route path="all" element={renderListView('All Astrologers')} />
       <Route path="online" element={renderListView('Online Now')} />
@@ -2357,6 +2409,8 @@ const AstrologersPage = () => {
         </div>
       )} />
     </Routes>
+    <ConfirmModal {...modalConfig} />
+  </>
   );
 };
 

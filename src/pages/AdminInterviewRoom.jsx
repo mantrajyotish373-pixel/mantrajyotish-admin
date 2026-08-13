@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Users, ArrowLeft, CheckCircle, XCircle, Volume2, ShieldCheck, Lock, FileText, CheckSquare, Save, X } from "lucide-react";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function AdminInterviewRoom() {
   const { id } = useParams(); // interviewId
@@ -27,6 +28,51 @@ export default function AdminInterviewRoom() {
   const [channelName, setChannelName] = useState("");
   const [token, setToken] = useState("");
   const [uid, setUid] = useState(1);
+
+  // Custom Modal State
+  const [confirmModalConfig, setConfirmModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'confirm',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    onConfirm: null,
+    onCancel: null,
+    showCancel: true
+  });
+
+  const showAlert = (message, title = 'Notification', type = 'info', onOk = null) => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText: 'OK',
+      showCancel: false,
+      onConfirm: () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onOk) onOk();
+      }
+    });
+  };
+
+  const showConfirm = (message, onConfirmCallback, title = 'Confirm Action', type = 'warning', confirmText = 'Confirm') => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (onConfirmCallback) onConfirmCallback();
+      },
+      onCancel: () => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
 
   const previewVideoRef = useRef(null);
   const pipVideoRef = useRef(null);
@@ -93,34 +139,38 @@ export default function AdminInterviewRoom() {
   };
 
   const handleMarkCompleted = async () => {
-    if (!window.confirm("Mark this interview as COMPLETED? You can review notes and evaluate (Pass/Fail) the astrologer anytime later from the dashboard.")) {
-      return;
-    }
-    try {
-      const tokenVal = localStorage.getItem('authToken') || '';
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(tokenVal ? { 'Authorization': `Bearer ${tokenVal}` } : {})
-        },
-        body: JSON.stringify({
-          interviewId: id,
-          interviewerNotes: interviewNotesText
-        })
-      });
+    showConfirm(
+      "Mark this interview as COMPLETED? You can review notes and evaluate (Pass/Fail) the astrologer anytime later from the dashboard.",
+      async () => {
+        try {
+          const tokenVal = localStorage.getItem('authToken') || '';
+          const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/complete`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(tokenVal ? { 'Authorization': `Bearer ${tokenVal}` } : {})
+            },
+            body: JSON.stringify({
+              interviewId: id,
+              interviewerNotes: interviewNotesText
+            })
+          });
 
-      const data = await response.json();
-      if (data.success) {
-        alert("✅ Interview marked as COMPLETED! Returning to dashboard.");
-        handleLeaveCall();
-      } else {
-        alert(data.message || "Failed to mark interview as completed.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error marking interview completed.");
-    }
+          const data = await response.json();
+          if (data.success) {
+            showAlert("Interview marked as COMPLETED! Returning to dashboard.", "Completed", "success", () => handleLeaveCall());
+          } else {
+            showAlert(data.message || "Failed to mark interview as completed.", "Error", "danger");
+          }
+        } catch (err) {
+          console.error(err);
+          showAlert("Error marking interview completed.", "Error", "danger");
+        }
+      },
+      "Complete Interview",
+      "warning",
+      "Yes, Complete"
+    );
   };
 
   // 2. Initialize Camera and Microphone Pre-Join Preview
@@ -251,7 +301,7 @@ export default function AdminInterviewRoom() {
 
   const handleQuickEvaluate = async (type) => {
     if (remoteUsers.length === 0) {
-      alert("Evaluation buttons are locked until the astrologer joins the interview room.");
+      showAlert("Evaluation buttons are locked until the astrologer joins the interview room.", "Locked", "info");
       return;
     }
     try {
@@ -274,14 +324,13 @@ export default function AdminInterviewRoom() {
 
       const data = await response.json();
       if (data.success) {
-        alert(`Evaluation set to: ${type.toUpperCase()}`);
-        handleLeaveCall();
+        showAlert(`Evaluation set to: ${type.toUpperCase()}`, "Success", "success", () => handleLeaveCall());
       } else {
-        alert(data.message || "Failed to update interview evaluation");
+        showAlert(data.message || "Failed to update interview evaluation", "Error", "danger");
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting quick evaluation");
+      showAlert("Error submitting quick evaluation", "Error", "danger");
     }
   };
 
@@ -653,6 +702,7 @@ export default function AdminInterviewRoom() {
           </div>
         </div>
       )}
+      <ConfirmModal {...confirmModalConfig} />
     </div>
   );
 }

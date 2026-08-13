@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 import { 
   Calendar, Clock, Video, CheckCircle, XCircle, Search, 
   User, Mail, RefreshCw, AlertCircle, Play, Check, X, Info,
@@ -25,6 +26,19 @@ export default function InterviewsPage() {
   // Evaluate Modal State
   const [showEvaluateModal, setShowEvaluateModal] = useState(false);
   const [evalNotes, setEvalNotes] = useState('');
+
+  // Confirm Modal State
+  const [confirmModalConfig, setConfirmModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'confirm',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    onConfirm: null,
+    onCancel: null,
+    showCancel: true
+  });
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
 
@@ -159,38 +173,62 @@ export default function InterviewsPage() {
   };
 
   // Quick approve/block directly from list (for already-passed/failed interviews)
-  const handleQuickApprove = async (interview) => {
-    if (!window.confirm(`Approve astrologer "${interview.astrologer?.name}"? They will be able to log in and start consultations.`)) return;
-    const token = localStorage.getItem('authToken') || '';
-    try {
-      const res = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ interviewId: interview._id, interviewerNotes: 'Approved directly by admin.' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchInterviews();
-        showToast('✅ Astrologer approved successfully!', 'success');
-      }
-    } catch (e) { showToast('Error approving astrologer', 'error'); }
+  const handleQuickApprove = (interview) => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title: 'Approve Astrologer',
+      message: `Approve astrologer "${interview.astrologer?.name}"? They will be able to log in and start consultations.`,
+      type: 'success',
+      confirmText: 'Yes, Approve',
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: async () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        const token = localStorage.getItem('authToken') || '';
+        try {
+          const res = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ interviewId: interview._id, interviewerNotes: 'Approved directly by admin.' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            fetchInterviews();
+            showToast('✅ Astrologer approved successfully!', 'success');
+          }
+        } catch (e) { showToast('Error approving astrologer', 'error'); }
+      },
+      onCancel: () => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
   };
 
-  const handleQuickBlock = async (interview) => {
-    if (!window.confirm(`Block/Reject astrologer "${interview.astrologer?.name}"? This will prevent them from logging in.`)) return;
-    const token = localStorage.getItem('authToken') || '';
-    try {
-      const res = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ interviewId: interview._id, interviewerNotes: 'Blocked by admin.' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchInterviews();
-        showToast('❌ Astrologer blocked.', 'error');
-      }
-    } catch (e) { showToast('Error blocking astrologer', 'error'); }
+  const handleQuickBlock = (interview) => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title: 'Block / Reject Astrologer',
+      message: `Block/Reject astrologer "${interview.astrologer?.name}"? This will prevent them from logging in.`,
+      type: 'danger',
+      confirmText: 'Yes, Block',
+      cancelText: 'Cancel',
+      showCancel: true,
+      onConfirm: async () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        const token = localStorage.getItem('authToken') || '';
+        try {
+          const res = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ interviewId: interview._id, interviewerNotes: 'Blocked by admin.' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            fetchInterviews();
+            showToast('❌ Astrologer blocked.', 'error');
+          }
+        } catch (e) { showToast('Error blocking astrologer', 'error'); }
+      },
+      onCancel: () => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
   };
 
   // Simple toast helper
@@ -663,6 +701,7 @@ export default function InterviewsPage() {
           </div>
         </div>
       )}
+      <ConfirmModal {...confirmModalConfig} />
     </div>
   );
 }
