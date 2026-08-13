@@ -197,7 +197,8 @@ const PaymentsPage = () => {
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    fetch('https://kalpjoytish-backend.onrender.com/api/payment/all')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`)
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch payment transactions');
@@ -231,7 +232,8 @@ const PaymentsPage = () => {
     if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
       setIsLoading(true);
       setError(null);
-      fetch(`https://kalpjoytish-backend.onrender.com/api/payment/${trimmed}`)
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/${trimmed}`)
         .then(res => {
           if (!res.ok) {
             throw new Error('Transaction ID not found');
@@ -250,7 +252,8 @@ const PaymentsPage = () => {
         });
     } else if (trimmed === '') {
       setIsLoading(true);
-      fetch('https://kalpjoytish-backend.onrender.com/api/payment/all')
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`)
         .then(res => res.json())
         .then(json => {
           if (json.success && Array.isArray(json.data)) {

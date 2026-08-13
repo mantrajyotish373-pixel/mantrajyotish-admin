@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -22,8 +22,25 @@ import LogoutModal from './components/LogoutModal';
 import LoginPage from './pages/LoginPage';
 import EditProfilePage from './pages/EditProfilePage';
 import ViewProfilePage from './pages/ViewProfilePage';
+import InterviewsPage from './pages/InterviewsPage';
+import AdminInterviewRoom from './pages/AdminInterviewRoom';
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
@@ -61,6 +78,10 @@ function App() {
     activeTab = 'Withdraw Requests';
   } else if (currentPath.startsWith('/kyc-verification')) {
     activeTab = 'KYC Verification';
+  } else if (currentPath.startsWith('/interviews')) {
+    activeTab = 'Interviews';
+  } else if (currentPath.startsWith('/interview-room')) {
+    activeTab = 'Interviews';
   } else if (currentPath.startsWith('/coupons')) {
     activeTab = 'Coupons';
   } else if (currentPath.startsWith('/banner-management')) {
@@ -125,7 +146,7 @@ function App() {
   );
 
   return (
-    <div className="flex h-screen w-screen bg-[#FCFAF8] relative font-sans text-slate-800 overflow-hidden">
+    <div className={`flex h-screen w-screen bg-slate-50 text-slate-800 relative font-sans overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
       {/* Sidebar overlay for mobile drawer */}
       {isSidebarOpen && (
         <div
@@ -146,7 +167,7 @@ function App() {
       {/* Main content wrapper */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Header */}
-        <Header toggleSidebar={toggleSidebar} />
+        <Header toggleSidebar={toggleSidebar} theme={theme} setTheme={setTheme} />
 
         {/* Dashboard/Users/Astrologers routing content panel */}
         <main className={mainClass}>
@@ -161,6 +182,8 @@ function App() {
             <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/withdraw-requests" element={<WithdrawRequestsPage />} />
             <Route path="/kyc-verification" element={<KycVerificationPage />} />
+            <Route path="/interviews" element={<InterviewsPage />} />
+            <Route path="/interview-room/:id" element={<AdminInterviewRoom />} />
             <Route path="/coupons" element={<CouponsPage />} />
             <Route path="/banner-management" element={<BannerManagementPage />} />
             <Route path="/astrologers/*" element={<AstrologersPage />} />

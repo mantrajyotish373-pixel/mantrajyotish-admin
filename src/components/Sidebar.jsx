@@ -23,6 +23,26 @@ const Sidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  const [pendingCount, setPendingCount] = React.useState(0);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/pending`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && Array.isArray(json.data)) {
+          setPendingCount(json.data.length);
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
+
   // Resolve active main tab and sub tab from the URL path
   let activeTab = 'Dashboard';
   let activeSubTab = '';
@@ -50,6 +70,8 @@ const Sidebar = () => {
     activeTab = 'Payments';
   } else if (currentPath.startsWith('/kyc-verification')) {
     activeTab = 'KYC Verification';
+  } else if (currentPath.startsWith('/interviews') || currentPath.startsWith('/interview-room')) {
+    activeTab = 'Interviews';
   } else if (currentPath.startsWith('/coupons')) {
     activeTab = 'Coupons';
   } else if (currentPath.startsWith('/reports')) {
@@ -83,7 +105,7 @@ const Sidebar = () => {
           hasSubmenu: true,
           subItems: [
             { id: 'All Astrologers', label: 'All Astrologers', path: '/astrologers/all' },
-            { id: 'Pending Approval', label: 'Pending Approval', path: '/astrologers/pending', badge: 12 },
+            { id: 'Pending Approval', label: 'Pending Approval', path: '/astrologers/pending', badge: pendingCount },
             { id: 'Verified Astrologers', label: 'Verified Astrologers', path: '/astrologers/verified' },
             { id: 'Blocked Astrologers', label: 'Blocked Astrologers', path: '/astrologers/blocked' },
             { id: 'Categories', label: 'Categories', path: '/astrologers/categories' }
@@ -91,6 +113,7 @@ const Sidebar = () => {
         },
         { id: 'Add New Astrologer', label: 'Add New Astrologer', icon: UserPlus, path: '/astrologers/add' },
         { id: 'KYC Verification', label: 'KYC Verification', icon: ShieldCheck, path: '/kyc-verification' },
+        { id: 'Interviews', label: 'Interviews', icon: Calendar, path: '/interviews' },
         { id: 'Appointments', label: 'Appointments', icon: Calendar, path: '/bookings' },
         { id: 'Payments', label: 'Payments', icon: IndianRupee, path: '/payments' },
         { id: 'Reports', label: 'Reports', icon: BarChart3, path: '/reports' },

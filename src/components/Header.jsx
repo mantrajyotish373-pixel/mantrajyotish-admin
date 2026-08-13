@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, Search, Bell, ChevronDown } from 'lucide-react';
+import { Menu, Search, Bell, ChevronDown, Sun, Moon } from 'lucide-react';
 
-const Header = ({ toggleSidebar }) => {
+const Header = ({ toggleSidebar, theme, setTheme }) => {
   const userStr = localStorage.getItem('user');
   let displayName = 'Admin';
   let displayRole = 'Super Admin';
@@ -49,6 +49,15 @@ const Header = ({ toggleSidebar }) => {
 
       {/* Notifications & Admin Profile */}
       <div className="flex items-center gap-6">
+        {/* Theme Toggle Button */}
+        <button 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2.5 text-slate-500 hover:text-[#FA5A24] rounded-full hover:bg-orange-50 transition-colors duration-200 bg-white border border-slate-100 shadow-sm"
+          title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         {/* Bell Icon with Badge */}
         <button className="relative p-2.5 text-slate-500 hover:text-[#FA5A24] rounded-full hover:bg-orange-50 transition-colors duration-200 bg-white border border-slate-100 shadow-sm">
           <Bell size={20} />

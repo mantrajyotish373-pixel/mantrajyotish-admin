@@ -28,7 +28,7 @@ import {
   MessageSquare,
   Building,
   Globe,
-  Map,
+  Map as MapIcon,
   Camera,
   Save,
   Lock,
@@ -39,7 +39,8 @@ import {
   GraduationCap,
   ArrowLeft,
   UserPlus,
-  FileText
+  FileText,
+  Video
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -240,17 +241,11 @@ const pendingAstrologersMock = [
 ];
 
 // Reusable Tabs mapper
-const getSubTabs = () => [
-  { id: 'all', label: 'All Astrologers', path: '/astrologers/all' },
-  { id: 'online', label: 'Online Now', badge: 120, path: '/astrologers/online' },
-  { id: 'verified', label: 'Verified', badge: 358, path: '/astrologers/verified' },
-  { id: 'pending', label: 'Pending', badge: 18, path: '/astrologers/pending' },
-  { id: 'blocked', label: 'Blocked', badge: 12, path: '/astrologers/blocked' }
-];
 
-const formatSkills = (skillsArray) => {
-  if (!Array.isArray(skillsArray) || skillsArray.length === 0) return 'Vedic';
-  return skillsArray.join(', ');
+const formatSkills = (skillsArray, altArray) => {
+  if (Array.isArray(skillsArray) && skillsArray.length > 0) return skillsArray.join(', ');
+  if (Array.isArray(altArray) && altArray.length > 0) return altArray.join(', ');
+  return 'Vedic';
 };
 
 const formatJoinedDate = (dateString) => {
@@ -280,8 +275,23 @@ const AstrologersPage = () => {
 
   const [interviewStatuses, setInterviewStatuses] = useState({});
 
+  const getSubTabs = () => [
+    { id: 'all', label: 'All Astrologers', badge: astrologers.length + pendingAstrologers.length, path: '/astrologers/all' },
+    { id: 'online', label: 'Online Now', badge: astrologers.filter(astro => astro.status === 'Online').length, path: '/astrologers/online' },
+    { id: 'verified', label: 'Verified', badge: astrologers.filter(astro => astro.isVerified).length, path: '/astrologers/verified' },
+    { id: 'pending', label: 'Pending', badge: pendingAstrologers.length, path: '/astrologers/pending' },
+    { id: 'blocked', label: 'Blocked', badge: astrologers.filter(astro => astro.status === 'Blocked').length, path: '/astrologers/blocked' }
+  ];
+
   const getInterviewStatus = (astroId) => {
-    return interviewStatuses[astroId] || localStorage.getItem('interview_status_' + astroId) || 'pending';
+    if (interviewStatuses[astroId]) return interviewStatuses[astroId];
+    const astro = [...astrologers, ...pendingAstrologers].find(a => a.id === astroId);
+    if (astro && astro.interview) {
+      if (astro.interview.result === 'pass' || astro.interview.status === 'passed') return 'cleared';
+      if (astro.interview.result === 'fail' || astro.interview.status === 'failed') return 'failed';
+      return astro.interview.status; // 'requested', 'scheduled', etc.
+    }
+    return localStorage.getItem('interview_status_' + astroId) || 'pending';
   };
 
   const updateInterviewStatus = (astroId, status, notesVal = '') => {
@@ -294,9 +304,10 @@ const AstrologersPage = () => {
     const token = localStorage.getItem('authToken');
     setIsLoading(true);
     
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
     const endpoint = status === 'cleared'
-      ? `https://kalpjoytish-backend.onrender.com/api/interview/pass/${astroId}`
-      : `https://kalpjoytish-backend.onrender.com/api/interview/fail/${astroId}`;
+      ? `${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass/${astroId}`
+      : `${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail/${astroId}`;
       
     fetch(endpoint, {
       method: 'PUT',
@@ -337,42 +348,42 @@ const AstrologersPage = () => {
 
   const handleVerifyStatusChange = (astro, statusVal) => {
     if (!astro || !astro.email) {
-      alert('Astrologer email is missing. Cannot verify status.');
+      alert('Astrologer email is missing. Cannot change status.');
       return;
     }
-    if (statusVal === 'approved') {
-      const interviewStatus = getInterviewStatus(astro.id);
-      if (interviewStatus !== 'cleared') {
-        alert('Cannot approve! Please mark the astrologer interview as "Cleared" first.');
-        return;
-      }
-    }
+
+    const confirmMsg = statusVal === 'approved'
+      ? `Approve "${astro.name || astro.email}"? They will be able to log in and start consultations.`
+      : `Block/Reject "${astro.name || astro.email}"? This will prevent them from accessing the platform.`;
+    if (!window.confirm(confirmMsg)) return;
+
     const token = localStorage.getItem('authToken');
     setIsLoading(true);
-    const endpoint = statusVal === 'approved'
-      ? `https://kalpjoytish-backend.onrender.com/api/astro/approve/${astro.id}`
-      : `https://kalpjoytish-backend.onrender.com/api/astro/reject/${astro.id}`;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
 
-    fetch(endpoint, {
-      method: 'PUT',
+    // Use interview pass/fail endpoints — they atomically update both the interview record
+    // AND the astrologer's status (approved/rejected) in the database.
+    const interviewEndpoint = statusVal === 'approved'
+      ? `${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass`
+      : `${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail`;
+
+    fetch(interviewEndpoint, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       body: JSON.stringify({
-        email: astro.email
+        astrologerId: astro.id || astro._id,
+        email: astro.email,
+        interviewerNotes: statusVal === 'approved' ? 'Approved by admin from Astrologers page.' : 'Blocked by admin from Astrologers page.'
       })
     })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Failed to ${statusVal} astrologer`);
-        }
-        return res.json();
-      })
+      .then(res => res.json().catch(() => ({})))
       .then(json => {
         setIsLoading(false);
         if (json.success) {
-          alert(`Astrologer successfully ${statusVal === 'approved' ? 'Approved' : 'Rejected'}!`);
+          alert(`Astrologer successfully ${statusVal === 'approved' ? '✅ Approved' : '❌ Blocked'}!`);
           fetchAstrologers();
           if (selectedAstro && selectedAstro.id === astro.id) {
             setSelectedAstro(prev => ({
@@ -382,116 +393,148 @@ const AstrologersPage = () => {
             }));
           }
         } else {
-          alert(json.message || `${statusVal} action failed.`);
+          // Fallback to direct approve/reject API if interview endpoint fails
+          const fallbackEndpoint = statusVal === 'approved'
+            ? `${apiBaseUrl.replace(/\/$/, '')}/api/astro/approve/${astro.id}`
+            : `${apiBaseUrl.replace(/\/$/, '')}/api/astro/reject/${astro.id}`;
+          return fetch(fallbackEndpoint, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ email: astro.email })
+          })
+            .then(r => r.json().catch(() => ({})))
+            .then(j => {
+              if (j.success) {
+                alert(`Astrologer successfully ${statusVal === 'approved' ? '✅ Approved' : '❌ Blocked'}!`);
+                fetchAstrologers();
+              } else {
+                alert(j.message || json.message || `${statusVal} action failed.`);
+              }
+            });
         }
       })
       .catch(err => {
         setIsLoading(false);
+
         console.error(err);
         alert(err.message || `Error occurred while trying to ${statusVal} astrologer.`);
       });
+  };
+
+  const defaultAstroDetails = {
+    memberSince: '10 May 2023',
+    languages: 'Hindi, English',
+    positiveRating: '100%',
+    totalClients: 0,
+    about: '',
+    expertise: [],
+    services: [],
+    earnings: {
+      total: '₹0',
+      thisMonth: '₹0',
+      totalCalls: 0,
+      totalChats: 0,
+      chartData: []
+    }
   };
 
   const fetchAstrologers = () => {
     setIsLoading(true);
     setError(null);
 
-    const fetchAll = fetch('https://kalpjoytish-backend.onrender.com/api/astro/all')
+    const token = localStorage.getItem('authToken');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const fetchAll = fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/all?status=all`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch astrologer profiles');
         return res.json();
-      });
+      })
+      .catch(err => ({ success: false, data: [] }));
 
-    const fetchPending = fetch('https://kalpjoytish-backend.onrender.com/api/astro/pending')
+    const fetchPending = fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/pending`, { headers })
       .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch pending astrologers');
+        if (!res.ok) return { success: false, data: [] };
         return res.json();
-      });
+      })
+      .catch(() => ({ success: false, data: [] }));
 
     Promise.all([fetchAll, fetchPending])
       .then(([allJson, pendingJson]) => {
         let verified = [];
         let pending = [];
 
+        const mapAstro = (item, idx, isVerif) => {
+          const capStatus = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Offline';
+          const formattedJoined = item.createdAt ? formatJoinedDate(item.createdAt) : '10 May 2023';
+          let astroAvatar = item.avatar;
+          if (!astroAvatar) {
+            astroAvatar = item.gender === 'female'
+              ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
+              : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop';
+          }
+          const detailsObj = item.details || defaultAstroDetails;
+          return {
+            id: item._id || idx,
+            name: item.name || 'Unnamed Astrologer',
+            skill: formatSkills(item.skills, item.specialization || item.strengths),
+            experience: (item.experience ?? 5) + ' Years',
+            rateMin: '₹' + (item.callRate ?? 20) + '/Call',
+            chatRateMin: '₹' + (item.chatRate ?? 15) + '/Chat',
+            rateRaw: item.callRate ?? 20,
+            chatRateRaw: item.chatRate ?? 15,
+            status: capStatus,
+            rating: item.rating ?? 4.8,
+            reviewsCount: item.reviewsCount ?? 120,
+            avatar: astroAvatar,
+            isVerified: isVerif,
+            interview: item.interview || null,
+            appliedOn: formattedJoined,
+            docsVerified: '3/5',
+            raw: item,
+            details: {
+              ...detailsObj,
+              memberSince: formattedJoined,
+              languages: Array.isArray(item.languages) && item.languages.length > 0 ? item.languages.join(', ') : 'Hindi, English',
+              about: item.about || item.introduction || ('Professional Astrologer specializing in ' + formatSkills(item.skills, item.specialization || item.strengths) + '.'),
+              expertise: (item.skills && item.skills.length > 0) ? item.skills : (item.specialization || ['Vedic Astrology']),
+            }
+          };
+        };
+
         if (allJson.success && Array.isArray(allJson.data)) {
           verified = allJson.data
-            .filter(item => item.isVerified === true)
-            .map((item, idx) => {
-              const capStatus = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Offline';
-              const formattedJoined = item.createdAt ? formatJoinedDate(item.createdAt) : '10 May 2023';
-              let astroAvatar = item.avatar;
-              if (!astroAvatar) {
-                astroAvatar = item.gender === 'female'
-                  ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
-                  : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop';
-              }
-              const mockDetails = mockAstrologersList[0].details;
-              return {
-                id: item._id || idx,
-                name: item.name || 'Unnamed Astrologer',
-                email: item.email || '',
-                skill: formatSkills(item.skills),
-                experience: (item.experience ?? 5) + ' Years',
-                rateMin: '₹' + (item.callRate ?? 20) + '/Call',
-                chatRateMin: '₹' + (item.chatRate ?? 15) + '/Chat',
-                rateRaw: item.callRate ?? 20,
-                chatRateRaw: item.chatRate ?? 15,
-                status: capStatus,
-                rating: item.rating ?? 4.8,
-                reviewsCount: item.reviewsCount ?? 120,
-                avatar: astroAvatar,
-                isVerified: true,
-                details: {
-                  ...mockDetails,
-                  memberSince: formattedJoined,
-                  languages: Array.isArray(item.languages) ? item.languages.join(', ') : 'Hindi, English',
-                  about: 'Professional Astrologer specializing in ' + formatSkills(item.skills) + '.',
-                  expertise: item.skills || ['Vedic Astrology'],
-                }
-              };
-            });
+            .filter(item => item.isVerified === true || item.status === 'approved')
+            .map((item, idx) => mapAstro(item, idx, true));
           setAstrologers(verified);
         }
 
+        const pendingMap = new Map();
         if (pendingJson.success && Array.isArray(pendingJson.data)) {
-          pending = pendingJson.data.map((item, idx) => {
-            const capStatus = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Offline';
-            const formattedJoined = item.createdAt ? formatJoinedDate(item.createdAt) : '10 May 2023';
-            let astroAvatar = item.avatar;
-            if (!astroAvatar) {
-              astroAvatar = item.gender === 'female'
-                ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
-                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop';
-            }
-            const mockDetails = mockAstrologersList[0].details;
-            return {
-              id: item._id || idx,
-              name: item.name || 'Unnamed Astrologer',
-              email: item.email || '',
-              skill: formatSkills(item.skills),
-              experience: (item.experience ?? 5) + ' Years',
-              rateMin: '₹' + (item.callRate ?? 20) + '/Call',
-              chatRateMin: '₹' + (item.chatRate ?? 15) + '/Chat',
-              rateRaw: item.callRate ?? 20,
-              chatRateRaw: item.chatRate ?? 15,
-              status: capStatus,
-              rating: item.rating ?? 4.8,
-              reviewsCount: item.reviewsCount ?? 120,
-              avatar: astroAvatar,
-              isVerified: false,
-              appliedOn: formattedJoined,
-              docsVerified: '3/5',
-              details: {
-                ...mockDetails,
-                memberSince: formattedJoined,
-                languages: Array.isArray(item.languages) ? item.languages.join(', ') : 'Hindi, English',
-                about: 'Professional Astrologer specializing in ' + formatSkills(item.skills) + '.',
-                expertise: item.skills || ['Vedic Astrology'],
-              }
-            };
+          pendingJson.data.forEach((item, idx) => {
+            const mapped = mapAstro(item, idx, false);
+            pendingMap.set(String(mapped.id), mapped);
           });
-          setPendingAstrologers(pending);
         }
+        if (allJson.success && Array.isArray(allJson.data)) {
+          allJson.data
+            .filter(item => item.status === 'pending' || item.status === 'requested' || !item.isVerified)
+            .forEach((item, idx) => {
+              const mapped = mapAstro(item, idx, false);
+              if (!pendingMap.has(String(mapped.id))) {
+                pendingMap.set(String(mapped.id), mapped);
+              }
+            });
+        }
+        pending = Array.from(pendingMap.values());
+        setPendingAstrologers(pending);
 
         const totalAstros = [...verified, ...pending];
         if (verified.length > 0) {
@@ -505,16 +548,18 @@ const AstrologersPage = () => {
         console.error(err);
         setError(err.message);
         setIsLoading(false);
-        setAstrologers(mockAstrologersList);
-        setPendingAstrologers(pendingAstrologersMock);
-        if (mockAstrologersList.length > 0) {
-          setSelectedAstro(mockAstrologersList[0]);
-        }
+        setAstrologers([]);
+        setPendingAstrologers([]);
+        setSelectedAstro(null);
       });
   };
 
   useEffect(() => {
     fetchAstrologers();
+    const intervalId = setInterval(() => {
+      fetchAstrologers();
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Form States
@@ -536,41 +581,32 @@ const AstrologersPage = () => {
   });
 
   const triggerEdit = (astro) => {
-    if (astro.id === 1) {
-      setFormData({
-        fullName: 'Pandit Ravi Sharma',
-        mobile: '9876543210',
-        email: 'ravi.sharma@gmail.com',
-        gender: 'Male',
-        dob: '10/04/1985',
-        languages: 'Hindi, English',
-        address: '101, Green Park, South Delhi',
-        city: 'Delhi',
-        state: 'Delhi',
-        pincode: '110016',
-        experience: '12',
-        chatRate: '20',
-        callRate: '30',
-        status: 'Online'
-      });
-    } else {
-      setFormData({
-        fullName: astro.name,
-        mobile: '9123456780',
-        email: 'astro.temp@gmail.com',
-        gender: 'Male',
-        dob: '15/06/1990',
-        languages: 'Hindi',
-        address: 'Sector 5, Noida',
-        city: 'Noida',
-        state: 'Uttar Pradesh',
-        pincode: '201301',
-        experience: astro.experience.replace(' Years', ''),
-        chatRate: '15',
-        callRate: '25',
-        status: 'Online'
-      });
-    }
+    // Use real data from the raw API response stored on the astrologer object
+    const raw = astro.raw || {};
+
+    // Helper to safely join arrays
+    const joinArr = (arr) => Array.isArray(arr) && arr.length > 0 ? arr.join(', ') : '';
+
+    // Parse experience — stored as string like "1 - 3 Years" or just "5"
+    const expRaw = raw.experience || astro.experience || '';
+    const expClean = String(expRaw).replace(' Years', '').trim();
+
+    setFormData({
+      fullName:   raw.name        || astro.name  || '',
+      mobile:     raw.phone       || raw.mobile   || raw.mobileNumber || '',
+      email:      raw.email       || astro.email  || '',
+      gender:     raw.gender      || '',
+      dob:        raw.dob         || raw.dateOfBirth || '',
+      languages:  joinArr(raw.languages)  || '',
+      address:    raw.address     || raw.location || '',
+      city:       raw.city        || '',
+      state:      raw.state       || '',
+      pincode:    raw.pincode     || raw.pin || '',
+      experience: expClean,
+      chatRate:   String(raw.chatRate ?? astro.chatRateRaw ?? ''),
+      callRate:   String(raw.callRate ?? astro.rateRaw ?? ''),
+      status:     raw.isOnline ? 'Online' : (raw.status === 'approved' ? 'Online' : 'Offline'),
+    });
     navigate('/astrologers/edit');
   };
 
@@ -595,7 +631,7 @@ const AstrologersPage = () => {
   };
 
   const triggerDetails = (astro, source = 'list') => {
-    const baseAstro = astrologers.find(x => x.id === astro.id) || pendingAstrologers.find(x => x.id === astro.id) || mockAstrologersList[0];
+    const baseAstro = astrologers.find(x => x.id === astro.id) || pendingAstrologers.find(x => x.id === astro.id) || astro;
     setSelectedAstro({ ...baseAstro, name: astro.name, avatar: astro.avatar });
     setDetailTab('Overview');
     navigate('/astrologers/details');
@@ -631,7 +667,8 @@ const AstrologersPage = () => {
       about: data.get('about') || ''
     };
 
-    fetch('https://kalpjoytish-backend.onrender.com/api/astrologer/register', {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astrologer/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -744,7 +781,7 @@ const AstrologersPage = () => {
             <div className="bg-amber-50 border border-amber-100 text-amber-700 text-[11px] px-4 py-2.5 rounded-xl font-medium mb-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2">
                 <AlertCircle size={14} className="text-amber-500" />
-                <span>Could not fetch live profiles ({error}). Showing offline data.</span>
+                <span>Could not fetch live profiles ({error}).</span>
               </div>
               <button 
                 onClick={() => {
@@ -858,9 +895,19 @@ const AstrologersPage = () => {
                       <td className="py-3.5">
                         {(() => {
                           const status = getInterviewStatus(astro.id);
-                          const scheduledData = localStorage.getItem('interview_schedule_' + astro.id);
                           
-                          if (status === 'cleared') {
+                          let displayDate = "";
+                          if (astro.interview && astro.interview.interviewDate) {
+                            displayDate = formatJoinedDate(astro.interview.interviewDate);
+                          } else {
+                            const scheduledData = localStorage.getItem('interview_schedule_' + astro.id);
+                            if (scheduledData) {
+                              const parsed = JSON.parse(scheduledData);
+                              displayDate = parsed.date;
+                            }
+                          }
+                          
+                          if (status === 'cleared' || status === 'passed') {
                             return (
                               <button 
                                 onClick={() => {
@@ -886,8 +933,7 @@ const AstrologersPage = () => {
                               </button>
                             );
                           }
-                          if (scheduledData) {
-                            const parsed = JSON.parse(scheduledData);
+                          if (status === 'scheduled' || displayDate) {
                             return (
                               <button 
                                 onClick={() => {
@@ -896,7 +942,20 @@ const AstrologersPage = () => {
                                 }}
                                 className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[9px] font-bold border border-blue-100 hover:bg-blue-100/60 transition-colors cursor-pointer select-none"
                               >
-                                Scheduled ({parsed.date})
+                                Scheduled ({displayDate || "Pending Date"})
+                              </button>
+                            );
+                          }
+                          if (status === 'requested') {
+                            return (
+                              <button 
+                                onClick={() => {
+                                  setSelectedAstro(astro);
+                                  navigate('/astrologers/interview');
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-orange-100 animate-pulse hover:bg-orange-200 text-orange-700 text-[9px] font-extrabold transition-all duration-200 border border-orange-200 cursor-pointer"
+                              >
+                                Review Request ⚡
                               </button>
                             );
                           }
@@ -1058,23 +1117,55 @@ const AstrologersPage = () => {
     const navigate = useNavigate();
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
-    const [platform, setPlatform] = useState('Google Meet');
-    const [meetingLink, setMeetingLink] = useState('');
+    const [platform, setPlatform] = useState('Agora Video/Audio Call');
+    const [meetingLink, setMeetingLink] = useState('Agora Room (Auto-generated)');
     const [notes, setNotes] = useState('');
+
+    const isJoinTimeAvailable = () => {
+      const interview = selectedAstro?.interview;
+      if (!interview || !interview.interviewDate) return false;
+      try {
+        const scheduledDateTime = new Date(interview.interviewDate);
+        const now = new Date();
+        const diffInMinutes = (scheduledDateTime.getTime() - now.getTime()) / (1000 * 60);
+        return diffInMinutes <= 15 && diffInMinutes >= -120;
+      } catch (e) {
+        return false;
+      }
+    };
 
     useEffect(() => {
       if (!selectedAstro) {
         navigate('/astrologers/pending');
         return;
       }
-      const existing = localStorage.getItem('interview_schedule_' + selectedAstro.id);
-      if (existing) {
-        const parsed = JSON.parse(existing);
-        setDate(parsed.date || '');
-        setTime(parsed.time || '');
-        setPlatform(parsed.platform || 'Google Meet');
-        setMeetingLink(parsed.meetingLink || '');
-        setNotes(parsed.notes || '');
+      
+      const interview = selectedAstro.interview;
+      if (interview) {
+        if (interview.interviewDate) {
+          const d = new Date(interview.interviewDate);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          setDate(`${yyyy}-${mm}-${dd}`);
+          
+          const hh = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          setTime(`${hh}:${min}`);
+        }
+        setNotes(interview.interviewerNotes || interview.requestNotes || '');
+        setPlatform(interview.meetingPlatform || 'Agora Video/Audio Call');
+        setMeetingLink(interview.meetingLink || 'Agora Room (Auto-generated)');
+      } else {
+        const existing = localStorage.getItem('interview_schedule_' + selectedAstro.id);
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          setDate(parsed.date || '');
+          setTime(parsed.time || '');
+          setPlatform(parsed.platform || 'Agora Video/Audio Call');
+          setMeetingLink(parsed.meetingLink || 'Agora Room (Auto-generated)');
+          setNotes(parsed.notes || '');
+        }
       }
     }, [selectedAstro, navigate]);
 
@@ -1082,25 +1173,36 @@ const AstrologersPage = () => {
 
     const handleSaveSchedule = (e) => {
       e.preventDefault();
-      if (!date || !time || !meetingLink.trim()) {
+      if (!date || !time) {
         alert('Please fill in all scheduling fields.');
+        return;
+      }
+
+      const isAgora = platform === 'Agora Video/Audio Call';
+      if (!isAgora && !meetingLink.trim()) {
+        alert('Please fill in the meeting invite link.');
         return;
       }
       
       const token = localStorage.getItem('authToken');
       setIsLoading(true);
       
-      fetch('https://kalpjoytish-backend.onrender.com/api/interview/schedule', {
-        method: 'PUT',
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      
+      // Combine date and time
+      const combinedDate = new Date(`${date} ${time}`);
+
+      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/schedule`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          interviewId: selectedAstro.id,
-          interviewDate: date,
-          interviewTime: time,
-          meetingLink: meetingLink.trim(),
+          astrologerId: selectedAstro.id,
+          interviewDate: combinedDate.toISOString(),
+          meetingLink: isAgora ? '' : meetingLink.trim(),
+          meetingPlatform: platform,
           interviewerNotes: notes.trim()
         })
       })
@@ -1116,12 +1218,9 @@ const AstrologersPage = () => {
           const payload = { date, time, platform, meetingLink: meetingLink.trim(), notes: notes.trim() };
           localStorage.setItem('interview_schedule_' + selectedAstro.id, JSON.stringify(payload));
           
-          // Set to pending if not cleared/failed yet
-          const curStatus = getInterviewStatus(selectedAstro.id);
-          if (curStatus === 'pending') {
-            updateInterviewStatus(selectedAstro.id, 'pending');
-          }
           alert('Interview scheduled successfully on live database!');
+          // Refresh page details/list
+          window.location.reload();
         } else {
           alert(json.message || 'Failed to update schedule.');
         }
@@ -1164,6 +1263,29 @@ const AstrologersPage = () => {
               <div className="flex justify-between"><span className="text-slate-400">Email</span><span className="truncate max-w-[150px]">{selectedAstro.email || 'N/A'}</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Charges</span><span>{selectedAstro.rateMin}</span></div>
             </div>
+
+            {selectedAstro.interview && selectedAstro.interview.status === 'scheduled' && (
+              <div className="w-full border-t border-slate-100 pt-4 flex flex-col gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-left">Video Interview Room</span>
+                {isJoinTimeAvailable() ? (
+                  <button
+                    onClick={() => navigate(`/interview-room/${selectedAstro.interview._id}`)}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                  >
+                    <Video size={14} />
+                    <span>Join Agora Meeting</span>
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold cursor-not-allowed select-none opacity-60"
+                  >
+                    <Video size={14} />
+                    <span>Join (Unlocks 15m Prior)</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Center Panel: Scheduling Form */}
@@ -1199,9 +1321,18 @@ const AstrologersPage = () => {
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Meeting Platform</label>
                   <select
                     value={platform}
-                    onChange={(e) => setPlatform(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPlatform(val);
+                      if (val === 'Agora Video/Audio Call') {
+                        setMeetingLink('Agora Room (Auto-generated)');
+                      } else if (meetingLink === 'Agora Room (Auto-generated)') {
+                        setMeetingLink('');
+                      }
+                    }}
                     className="w-full text-xs font-bold text-slate-655 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none"
                   >
+                    <option>Agora Video/Audio Call</option>
                     <option>Google Meet</option>
                     <option>Zoom</option>
                     <option>Microsoft Teams</option>
@@ -1211,11 +1342,12 @@ const AstrologersPage = () => {
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Meeting Invite Link *</label>
                   <input
                     type="text"
-                    required
+                    required={platform !== 'Agora Video/Audio Call'}
+                    disabled={platform === 'Agora Video/Audio Call'}
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
-                    placeholder="e.g. https://meet.google.com/abc-defg-hij"
-                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200"
+                    placeholder={platform === 'Agora Video/Audio Call' ? 'Agora Token-based room link' : 'e.g. https://meet.google.com/abc-defg-hij'}
+                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200 disabled:opacity-75 disabled:bg-slate-50"
                   />
                 </div>
               </div>
@@ -1714,9 +1846,20 @@ const AstrologersPage = () => {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-slate-600">Profile Photo *</label>
                   <div className="flex items-center gap-4">
-                    <img src={selectedAstro?.avatar || ''} alt="Astro Avatar" className="w-16 h-16 rounded-full object-cover border border-slate-100 shadow" />
+                    {(selectedAstro?.raw?.profileImage || selectedAstro?.avatar) ? (
+                      <img 
+                        src={selectedAstro?.raw?.profileImage || selectedAstro?.avatar} 
+                        alt="Astro Avatar" 
+                        className="w-16 h-16 rounded-full object-cover border border-slate-100 shadow" 
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-orange-100 border border-slate-100 shadow flex items-center justify-center text-[#FA5A24] font-extrabold text-lg">
+                        {(selectedAstro?.name || 'A').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <button className="px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-[10px] font-bold text-slate-600 transition-colors">Change Photo</button>
                   </div>
+
                 </div>
                 <div className="flex flex-col gap-1.5 mt-3"><label className="text-[11px] font-bold text-slate-600">Experience (Years) *</label><input type="text" defaultValue={formData.experience} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
                 <div className="grid grid-cols-2 gap-3">

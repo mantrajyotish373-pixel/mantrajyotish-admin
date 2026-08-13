@@ -341,10 +341,16 @@ const UsersPage = () => {
     address: ''
   });
 
-  useEffect(() => {
-    setIsLoading(true);
+  const fetchUsers = (showLoading = false) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
-    fetch('https://kalpjoytish-backend.onrender.com/api/user/all')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const token = localStorage.getItem('authToken');
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/user/all`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    })
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch user profiles');
@@ -394,9 +400,6 @@ const UsersPage = () => {
           });
           
           setUsers(mappedUsers);
-          if (mappedUsers.length > 0) {
-            setSelectedUser(mappedUsers[0]);
-          }
         } else {
           throw new Error('Invalid API response format');
         }
@@ -406,12 +409,15 @@ const UsersPage = () => {
         console.error(err);
         setError(err.message);
         setIsLoading(false);
-        // Fallback offline mock data
-        setUsers(mockUsers);
-        if (mockUsers.length > 0) {
-          setSelectedUser(mockUsers[0]);
-        }
       });
+  };
+
+  useEffect(() => {
+    fetchUsers(true);
+    const intervalId = setInterval(() => {
+      fetchUsers(false);
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleAddUserSubmit = (e) => {
@@ -431,7 +437,8 @@ const UsersPage = () => {
 
     setIsSubmitting(true);
     const token = localStorage.getItem('authToken');
-    fetch("https://kalpjoytish-backend.onrender.com/api/user/create", {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/user/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
