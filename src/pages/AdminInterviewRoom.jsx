@@ -46,7 +46,7 @@ export default function AdminInterviewRoom() {
         });
         const data = await response.json();
         if (data.success) {
-          setAppId(data.appId || "MOCK_AGORA_APP_ID");
+          setAppId(data.appId);
           setChannelName(data.channelName);
           setToken(data.token);
           setUid(data.uid || 1);
@@ -170,9 +170,7 @@ export default function AdminInterviewRoom() {
     if (!channelName) return;
     setIsJoiningChannel(true);
 
-    const validAppId = (appId && appId !== "MOCK_AGORA_APP_ID") 
-      ? appId 
-      : (import.meta.env.VITE_AGORA_APP_ID || "af89ac0f87f4412ea75f23aba4717e04");
+    const validAppId = appId;
     
     const validToken = (token && !token.startsWith("mock_")) ? token : null;
 
