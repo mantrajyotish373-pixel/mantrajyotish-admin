@@ -40,7 +40,8 @@ import {
   ArrowLeft,
   UserPlus,
   FileText,
-  Video
+  Video,
+  RefreshCw
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -262,6 +263,7 @@ const AstrologersPage = () => {
   const [astrologers, setAstrologers] = useState([]);
   const [pendingAstrologers, setPendingAstrologers] = useState([]);
   const [selectedAstro, setSelectedAstro] = useState(null);
+  const [isInterviewDrawerOpen, setIsInterviewDrawerOpen] = useState(false);
   const [detailTab, setDetailTab] = useState('Overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -272,8 +274,13 @@ const AstrologersPage = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerError, setRegisterError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [interviewStatuses, setInterviewStatuses] = useState({});
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, location.pathname, itemsPerPage]);
 
   const getSubTabs = () => [
     { id: 'all', label: 'All Astrologers', badge: astrologers.length + pendingAstrologers.length, path: '/astrologers/all' },
@@ -341,10 +348,6 @@ const AstrologersPage = () => {
       alert(err.message || 'Error occurred while saving status.');
     });
   };
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, location.pathname]);
 
   const handleVerifyStatusChange = (astro, statusVal) => {
     if (!astro || !astro.email) {
@@ -441,8 +444,8 @@ const AstrologersPage = () => {
     }
   };
 
-  const fetchAstrologers = () => {
-    setIsLoading(true);
+  const fetchAstrologers = (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
 
     const token = localStorage.getItem('authToken');
@@ -537,11 +540,7 @@ const AstrologersPage = () => {
         setPendingAstrologers(pending);
 
         const totalAstros = [...verified, ...pending];
-        if (verified.length > 0) {
-          setSelectedAstro(verified[0]);
-        } else if (totalAstros.length > 0) {
-          setSelectedAstro(totalAstros[0]);
-        }
+        setSelectedAstro(prev => prev || verified[0] || totalAstros[0] || null);
         setIsLoading(false);
       })
       .catch(err => {
@@ -555,10 +554,11 @@ const AstrologersPage = () => {
   };
 
   useEffect(() => {
-    fetchAstrologers();
+    fetchAstrologers(true);
+    // Auto-refresh every 90 minutes (5400000 ms)
     const intervalId = setInterval(() => {
-      fetchAstrologers();
-    }, 5000);
+      fetchAstrologers(false);
+    }, 5400000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -721,40 +721,42 @@ const AstrologersPage = () => {
       return astro.name.toLowerCase().includes(q) || astro.skill.toLowerCase().includes(q);
     });
 
-    const itemsPerPage = 10;
     const totalPages = Math.ceil(filteredList.length / itemsPerPage) || 1;
     const paginatedList = filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const getPageNumbers = () => {
-      const pages = [];
-      const maxVisible = 5;
-      if (totalPages <= maxVisible) {
+      if (totalPages <= 7) {
+        const pages = [];
         for (let i = 1; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        let start = Math.max(2, currentPage - 1);
-        let end = Math.min(totalPages - 1, currentPage + 1);
-
-        if (currentPage <= 2) {
-          end = 4;
-        } else if (currentPage >= totalPages - 1) {
-          start = totalPages - 3;
-        }
-
-        if (start > 2) {
-          pages.push('...');
-        }
-
-        for (let i = start; i <= end; i++) {
-          pages.push(i);
-        }
-
-        if (end < totalPages - 1) {
-          pages.push('...');
-        }
-
-        pages.push(totalPages);
+        return pages;
       }
+
+      const pages = [1];
+
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+
+      if (currentPage <= 3) {
+        start = 2;
+        end = 4;
+      } else if (currentPage >= totalPages - 2) {
+        start = totalPages - 3;
+        end = totalPages - 1;
+      }
+
+      if (start > 2) {
+        pages.push('...');
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
       return pages;
     };
 
@@ -837,6 +839,14 @@ const AstrologersPage = () => {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end font-semibold">
+              <button 
+                onClick={() => fetchAstrologers(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-600 hover:bg-orange-50/50 hover:border-orange-200 hover:text-[#FA5A24] transition-all duration-200 cursor-pointer"
+                title="Refresh Astrologer Data"
+              >
+                <RefreshCw size={14} className={isLoading ? "animate-spin text-[#FA5A24]" : ""} />
+                <span>Refresh</span>
+              </button>
               <button className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-600 hover:bg-slate-50 transition-all duration-200">
                 <SlidersHorizontal size={14} />
                 <span>Filters</span>
@@ -877,12 +887,16 @@ const AstrologersPage = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : pendingAstrologers.map((astro) => (
+                  ) : paginatedList.map((astro) => (
                     <tr key={astro.id} className="hover:bg-orange-50/20 transition-colors duration-150">
-                      <td className="py-3.5 pl-2 flex items-center gap-3">
-                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100" />
+                      <td 
+                        onClick={() => triggerDetails(astro)}
+                        className="py-3.5 pl-2 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                        title="Click to view full astrologer profile"
+                      >
+                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 shadow-xs" />
                         <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">{astro.name}</span>
+                          <span className="font-bold text-slate-800 hover:text-[#FA5A24] transition-colors">{astro.name}</span>
                           <span className="text-[10px] text-slate-400 font-semibold">{astro.skill}</span>
                         </div>
                       </td>
@@ -912,7 +926,7 @@ const AstrologersPage = () => {
                               <button 
                                 onClick={() => {
                                   setSelectedAstro(astro);
-                                  navigate('/astrologers/interview');
+                                  setIsInterviewDrawerOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold border border-emerald-100 flex items-center gap-1 w-fit hover:bg-emerald-100/60 transition-colors cursor-pointer select-none"
                               >
@@ -925,7 +939,7 @@ const AstrologersPage = () => {
                               <button 
                                 onClick={() => {
                                   setSelectedAstro(astro);
-                                  navigate('/astrologers/interview');
+                                  setIsInterviewDrawerOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[9px] font-bold border border-rose-100 hover:bg-rose-100/60 transition-colors cursor-pointer select-none"
                               >
@@ -938,7 +952,7 @@ const AstrologersPage = () => {
                               <button 
                                 onClick={() => {
                                   setSelectedAstro(astro);
-                                  navigate('/astrologers/interview');
+                                  setIsInterviewDrawerOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[9px] font-bold border border-blue-100 hover:bg-blue-100/60 transition-colors cursor-pointer select-none"
                               >
@@ -951,7 +965,7 @@ const AstrologersPage = () => {
                               <button 
                                 onClick={() => {
                                   setSelectedAstro(astro);
-                                  navigate('/astrologers/interview');
+                                  setIsInterviewDrawerOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-lg bg-orange-100 animate-pulse hover:bg-orange-200 text-orange-700 text-[9px] font-extrabold transition-all duration-200 border border-orange-200 cursor-pointer"
                               >
@@ -963,7 +977,7 @@ const AstrologersPage = () => {
                             <button 
                               onClick={() => {
                                 setSelectedAstro(astro);
-                                navigate('/astrologers/interview');
+                                setIsInterviewDrawerOpen(true);
                               }}
                               className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100/60 text-[#FA5A24] text-[9px] font-extrabold transition-all duration-200 border border-orange-100 cursor-pointer"
                             >
@@ -991,7 +1005,6 @@ const AstrologersPage = () => {
                           >
                             <X size={12} className="stroke-[3]" />
                           </button>
-                          <button onClick={() => triggerDetails(astro)} className="p-1 text-slate-400 hover:text-[#FA5A24] rounded"><Eye size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -1024,9 +1037,13 @@ const AstrologersPage = () => {
                     </tr>
                   ) : paginatedList.map((astro) => (
                     <tr key={astro.id} className="hover:bg-orange-50/20 transition-colors duration-150">
-                      <td className="py-3.5 pl-2 flex items-center gap-3">
-                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100" />
-                        <span className="font-bold text-slate-800">{astro.name}</span>
+                      <td 
+                        onClick={() => triggerDetails(astro)}
+                        className="py-3.5 pl-2 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                        title="Click to view full astrologer profile"
+                      >
+                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 shadow-xs" />
+                        <span className="font-bold text-slate-800 hover:text-[#FA5A24] transition-colors">{astro.name}</span>
                       </td>
                       <td className="py-3.5 font-bold"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px]">{astro.skill}</span></td>
                       <td className="py-3.5 font-semibold text-slate-500">{astro.experience}</td>
@@ -1054,8 +1071,7 @@ const AstrologersPage = () => {
                       </td>
                       <td className="py-3.5 pr-2 text-right">
                         <div className="inline-flex items-center gap-1">
-                          <button onClick={() => triggerDetails(astro)} className="p-1 text-slate-400 hover:text-[#FA5A24] rounded"><Eye size={14} /></button>
-                          <button onClick={() => triggerEdit(astro)} className="p-1 text-slate-400 hover:text-indigo-600 rounded"><Pencil size={14} /></button>
+                          <button onClick={() => triggerEdit(astro)} className="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Profile"><Pencil size={14} /></button>
                           <button className="p-1 text-slate-400 hover:text-slate-600 rounded"><MoreVertical size={14} /></button>
                         </div>
                       </td>
@@ -1067,21 +1083,51 @@ const AstrologersPage = () => {
           </div>
 
           {/* Pagination controls */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mt-5 border-t border-slate-100 pt-5 flex-shrink-0">
-            <span className="text-[11px] text-slate-400 font-semibold">
-              Showing {filteredList.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredList.length)} of {filteredList.length} astrologers
-            </span>
-            <div className="flex items-center gap-1.5">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mt-5 border-t border-slate-100 pt-4 flex-shrink-0">
+            {/* Showing status & Page size selector */}
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-slate-500 font-semibold">
+                Showing {filteredList.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredList.length)} of {filteredList.length} astrologers
+              </span>
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 border-l border-slate-200 pl-3">
+                <span>Show:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-2 py-1 outline-none focus:border-orange-200 cursor-pointer"
+                >
+                  <option value={10}>10 / page</option>
+                  <option value={20}>20 / page</option>
+                  <option value={50}>50 / page</option>
+                  <option value={100}>100 / page</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Page number buttons */}
+            <div className="flex items-center gap-1">
+              {/* Jump to First Page << */}
+              <button 
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                title="First Page"
+              >
+                &laquo;
+              </button>
+              {/* Prev Page < */}
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 text-xs font-bold hover:bg-orange-50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                title="Previous Page"
               >
                 &lt;
               </button>
+
               {getPageNumbers().map((p, idx) => {
                 if (p === '...') {
-                  return <span key={`dots-${idx}`} className="text-slate-400 text-xs px-1 select-none">...</span>;
+                  return <span key={`dots-${idx}`} className="text-slate-400 text-xs px-1 select-none font-bold">...</span>;
                 }
                 const isActive = p === currentPage;
                 return (
@@ -1091,29 +1137,57 @@ const AstrologersPage = () => {
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-150 ${
                       isActive 
                         ? 'bg-[#FA5A24] text-white shadow-sm' 
-                        : 'border border-slate-200 text-slate-600 hover:bg-orange-50/50 hover:text-[#FA5A24]'
+                        : 'border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-[#FA5A24]'
                     }`}
                   >
                     {p}
                   </button>
                 );
               })}
+
+              {/* Next Page > */}
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 text-xs font-bold hover:bg-orange-50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                title="Next Page"
               >
                 &gt;
+              </button>
+              {/* Jump to Last Page >> */}
+              <button 
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                title="Last Page"
+              >
+                &raquo;
               </button>
             </div>
           </div>
         </div>
+
+        {/* Popup Modal (65-70% screen size) for Interview Scheduling */}
+        {isInterviewDrawerOpen && selectedAstro && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6 md:p-8 animate-in fade-in duration-200">
+            {/* Backdrop click to close */}
+            <div className="absolute inset-0" onClick={() => setIsInterviewDrawerOpen(false)} />
+            
+            {/* Centered Popup Modal Card (~65-70% screen size, no-scroll single page fit) */}
+            <div className="relative z-10 w-full max-w-4xl max-h-[92vh] bg-[#FCFAF8] rounded-3xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+              <InterviewScheduleScreen 
+                isDrawer={true} 
+                onClose={() => setIsInterviewDrawerOpen(false)} 
+              />
+            </div>
+          </div>
+        )}
       </>
     );
   };
 
-  // Interview schedule screen component
-  const InterviewScheduleScreen = () => {
+  // Interview schedule screen / drawer component
+  const InterviewScheduleScreen = ({ isDrawer = false, onClose }) => {
     const navigate = useNavigate();
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
@@ -1136,7 +1210,7 @@ const AstrologersPage = () => {
 
     useEffect(() => {
       if (!selectedAstro) {
-        navigate('/astrologers/pending');
+        if (!isDrawer) navigate('/astrologers/pending');
         return;
       }
       
@@ -1167,7 +1241,7 @@ const AstrologersPage = () => {
           setNotes(parsed.notes || '');
         }
       }
-    }, [selectedAstro, navigate]);
+    }, [selectedAstro, navigate, isDrawer]);
 
     if (!selectedAstro) return null;
 
@@ -1189,7 +1263,6 @@ const AstrologersPage = () => {
       
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
       
-      // Combine date and time
       const combinedDate = new Date(`${date} ${time}`);
 
       fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/schedule`, {
@@ -1219,8 +1292,8 @@ const AstrologersPage = () => {
           localStorage.setItem('interview_schedule_' + selectedAstro.id, JSON.stringify(payload));
           
           alert('Interview scheduled successfully on live database!');
-          // Refresh page details/list
-          window.location.reload();
+          fetchAstrologers();
+          if (onClose) onClose();
         } else {
           alert(json.message || 'Failed to update schedule.');
         }
@@ -1235,52 +1308,53 @@ const AstrologersPage = () => {
     const status = getInterviewStatus(selectedAstro.id);
 
     return (
-      <div className="flex-1 flex flex-col overflow-y-auto h-full w-full bg-[#FCFAF8] p-4 md:p-6 lg:p-8 space-y-6">
+      <div className="w-full h-full flex flex-col overflow-y-auto bg-[#FCFAF8] p-4 md:p-5 space-y-3.5">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#FFF9F6] via-[#FFF3EC] to-[#FFE8DC] border border-orange-100/50 rounded-3xl p-6 md:p-8 flex items-center justify-between relative overflow-hidden flex-shrink-0 shadow-sm">
-          <div className="flex items-start gap-4 z-10">
-            <button 
-              onClick={() => navigate('/astrologers/pending')} 
-              className="w-10 h-10 rounded-full bg-white/90 border border-orange-100 hover:bg-white flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all shadow-sm cursor-pointer"
-            >
-              <ArrowLeft size={18} />
-            </button>
+        <div className="bg-gradient-to-r from-[#FFF9F6] via-[#FFF3EC] to-[#FFE8DC] border border-orange-100/50 rounded-2xl p-3.5 md:p-4 flex items-center justify-between relative overflow-hidden flex-shrink-0 shadow-xs">
+          <div className="flex items-center justify-between w-full z-10">
             <div className="flex flex-col text-left">
-              <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>Schedule Astrologer Interview</h2>
-              <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Set date, time and video link for {selectedAstro.name}.</p>
+              <h2 className="text-base md:text-lg font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>Schedule Astrologer Interview</h2>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Set date, time and video link for {selectedAstro.name}.</p>
             </div>
+            <button 
+              onClick={onClose || (() => navigate('/astrologers/pending'))} 
+              className="w-8 h-8 rounded-full bg-white/90 border border-orange-100 hover:bg-white flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all shadow-xs cursor-pointer flex-shrink-0"
+              title="Close Popup"
+            >
+              <X size={16} />
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Left Panel: Astrologer Summary Card */}
-          <div className="lg:col-span-1 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm text-center flex flex-col items-center">
-            <img src={selectedAstro.avatar} alt={selectedAstro.name} className="w-20 h-20 rounded-full object-cover border border-slate-100 shadow mb-4" />
-            <h3 className="text-base font-extrabold text-slate-800" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1 tracking-wider uppercase">{selectedAstro.skill}</span>
-            <div className="w-full border-t border-slate-100 my-5 pt-4 text-xs font-semibold text-slate-600 text-left space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          {/* Astrologer Summary Card */}
+          <div className="lg:col-span-1 bg-white border border-slate-100 rounded-2xl p-4 shadow-xs text-center flex flex-col items-center">
+            <img src={selectedAstro.avatar} alt={selectedAstro.name} className="w-14 h-14 rounded-full object-cover border border-slate-100 shadow mb-2" />
+            <h3 className="text-sm font-extrabold text-slate-800" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
+            <span className="text-[9px] text-slate-400 font-bold block mt-0.5 tracking-wider uppercase">{selectedAstro.skill}</span>
+            <div className="w-full border-t border-slate-100 my-3 pt-2.5 text-[11px] font-semibold text-slate-600 text-left space-y-2">
               <div className="flex justify-between"><span className="text-slate-400">Experience</span><span>{selectedAstro.experience}</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Email</span><span className="truncate max-w-[150px]">{selectedAstro.email || 'N/A'}</span></div>
               <div className="flex justify-between"><span className="text-slate-400">Charges</span><span>{selectedAstro.rateMin}</span></div>
             </div>
 
             {selectedAstro.interview && selectedAstro.interview.status === 'scheduled' && (
-              <div className="w-full border-t border-slate-100 pt-4 flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-left">Video Interview Room</span>
+              <div className="w-full border-t border-slate-100 pt-2.5 flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-left">Video Interview Room</span>
                 {isJoinTimeAvailable() ? (
                   <button
                     onClick={() => navigate(`/interview-room/${selectedAstro.interview._id}`)}
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
                   >
-                    <Video size={14} />
+                    <Video size={13} />
                     <span>Join Agora Meeting</span>
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold cursor-not-allowed select-none opacity-60"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold cursor-not-allowed select-none opacity-60"
                   >
-                    <Video size={14} />
+                    <Video size={13} />
                     <span>Join (Unlocks 15m Prior)</span>
                   </button>
                 )}
@@ -1288,37 +1362,68 @@ const AstrologersPage = () => {
             )}
           </div>
 
-          {/* Center Panel: Scheduling Form */}
-          <div className="lg:col-span-2 space-y-6">
-            <form onSubmit={handleSaveSchedule} className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-5">
-              <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider">Interview Session Details</h4>
+          {/* Scheduling Form & Actions */}
+          <div className="lg:col-span-2 space-y-3.5">
+            <form onSubmit={handleSaveSchedule} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-xs space-y-3">
+              <h4 className="text-[11px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Interview Session Details</h4>
+
+              {/* Astrologer's Requested Availability Slots (Quick Auto-Fill Chips) */}
+              {(() => {
+                const slots = selectedAstro?.interview?.preferredSlots || selectedAstro?.preferredSlots || [];
+                if (!slots.length) return null;
+                return (
+                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-2.5 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's Requested Time Slots</span>
+                      <span className="text-[9px] text-slate-400 font-semibold">Click a slot to auto-fill</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {slots.map((slot, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (slot.date) setDate(slot.date);
+                            if (slot.time) setTime(slot.time);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-200 hover:bg-[#FA5A24] hover:text-white text-slate-800 rounded-lg text-xs font-extrabold transition-all shadow-2xs cursor-pointer group"
+                          title="Click to select this slot for the interview"
+                        >
+                          <Calendar size={12} className="text-[#FA5A24] group-hover:text-white" />
+                          <span>Option {idx + 1}: {slot.date} at {slot.time}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interview Date *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Interview Date *</label>
                   <input
                     type="date"
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200"
+                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-2.5 py-1.5 rounded-xl outline-none focus:border-orange-200 cursor-pointer"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interview Time *</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Interview Time *</label>
                   <input
                     type="time"
                     required
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200"
+                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-2.5 py-1.5 rounded-xl outline-none focus:border-orange-200 cursor-pointer"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Meeting Platform</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Meeting Platform</label>
                   <select
                     value={platform}
                     onChange={(e) => {
@@ -1330,7 +1435,7 @@ const AstrologersPage = () => {
                         setMeetingLink('');
                       }
                     }}
-                    className="w-full text-xs font-bold text-slate-655 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none"
+                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-2.5 py-1.5 rounded-xl outline-none"
                   >
                     <option>Agora Video/Audio Call</option>
                     <option>Google Meet</option>
@@ -1338,8 +1443,8 @@ const AstrologersPage = () => {
                     <option>Microsoft Teams</option>
                   </select>
                 </div>
-                <div className="sm:col-span-2 flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Meeting Invite Link *</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Meeting Invite Link *</label>
                   <input
                     type="text"
                     required={platform !== 'Agora Video/Audio Call'}
@@ -1347,79 +1452,79 @@ const AstrologersPage = () => {
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
                     placeholder={platform === 'Agora Video/Audio Call' ? 'Agora Token-based room link' : 'e.g. https://meet.google.com/abc-defg-hij'}
-                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200 disabled:opacity-75 disabled:bg-slate-50"
+                    className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-2.5 py-1.5 rounded-xl outline-none focus:border-orange-200 disabled:opacity-75 disabled:bg-slate-50"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Interviewer Notes</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Interviewer Notes</label>
                 <textarea
-                  rows="3"
+                  rows="2"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Enter details, requirements or instructions for the interview..."
-                  className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-3 py-2.5 rounded-xl outline-none focus:border-orange-200 resize-none font-medium"
+                  className="w-full text-xs font-bold text-slate-700 bg-[#FCFAF8] border border-slate-200 px-2.5 py-1.5 rounded-xl outline-none focus:border-orange-200 resize-none font-medium"
                 />
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end pt-0.5">
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-6 py-2.5 bg-[#FA5A24] text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-md transition-all"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#FA5A24] text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-sm transition-all cursor-pointer"
                 >
-                  <Save size={14} />
+                  <Save size={13} />
                   <span>Save & Generate Invite</span>
                 </button>
               </div>
             </form>
 
             {/* Verification Status Actions Panel */}
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border border-slate-100 rounded-2xl p-3.5 shadow-xs space-y-2.5">
               <div>
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Interview Status Action</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Mark if candidate cleared or failed the interview</p>
+                <h4 className="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider">Interview Status Action</h4>
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Mark if candidate cleared or failed the interview</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-2.5">
                 {status === 'cleared' ? (
-                  <div className="flex items-center gap-4 w-full justify-between">
-                    <div className="px-4 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl text-xs font-bold flex items-center gap-2 select-none">
-                      <CheckCircle size={15} />
+                  <div className="flex items-center gap-3 w-full justify-between">
+                    <div className="px-3.5 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl text-xs font-bold flex items-center gap-2 select-none">
+                      <CheckCircle size={14} />
                       <span>Interview Status: Passed / Cleared</span>
                     </div>
                     <button 
                       onClick={() => updateInterviewStatus(selectedAstro.id, 'pending')}
-                      className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all"
+                      className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                       Reset Selection
                     </button>
                   </div>
                 ) : status === 'failed' ? (
-                  <div className="flex items-center gap-4 w-full justify-between">
-                    <div className="px-4 py-2.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-bold flex items-center gap-2 select-none">
-                      <AlertCircle size={15} />
+                  <div className="flex items-center gap-3 w-full justify-between">
+                    <div className="px-3.5 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-bold flex items-center gap-2 select-none">
+                      <AlertCircle size={14} />
                       <span>Interview Status: Failed</span>
                     </div>
                     <button 
                       onClick={() => updateInterviewStatus(selectedAstro.id, 'pending')}
-                      className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all"
+                      className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                       Reset Selection
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-2.5 w-full">
                     <button
                       onClick={() => updateInterviewStatus(selectedAstro.id, 'cleared', notes)}
-                      className="flex-1 py-3 bg-[#E6F4EA] hover:bg-emerald-100 text-[#137333] rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 border border-emerald-100 cursor-pointer"
+                      className="flex-1 py-2.5 bg-[#E6F4EA] hover:bg-emerald-100 text-[#137333] rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 border border-emerald-100 cursor-pointer"
                     >
                       <Check size={14} className="stroke-[3]" />
                       <span>Mark Interview Cleared</span>
                     </button>
                     <button
                       onClick={() => updateInterviewStatus(selectedAstro.id, 'failed', notes)}
-                      className="flex-1 py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 border border-rose-100 cursor-pointer"
+                      className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 border border-rose-100 cursor-pointer"
                     >
                       <X size={14} className="stroke-[3]" />
                       <span>Mark Interview Failed</span>

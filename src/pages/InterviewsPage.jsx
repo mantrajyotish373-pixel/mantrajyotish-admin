@@ -60,9 +60,9 @@ export default function InterviewsPage() {
     fetchInterviews();
   }, [fetchInterviews]);
 
-  // Auto-refresh every 30 seconds to catch new requests from astrologers
+  // Auto-refresh every 1.5 minutes (90 seconds)
   useEffect(() => {
-    const interval = setInterval(() => fetchInterviews(true), 30000);
+    const interval = setInterval(() => fetchInterviews(true), 90000);
     return () => clearInterval(interval);
   }, [fetchInterviews]);
 
@@ -114,7 +114,7 @@ export default function InterviewsPage() {
 
   const handleOpenEvaluate = (interview) => {
     setSelectedInterview(interview);
-    setEvalNotes('');
+    setEvalNotes(interview.interviewerNotes || interview.requestNotes || '');
     setShowEvaluateModal(true);
   };
 
@@ -324,14 +324,19 @@ export default function InterviewsPage() {
                   const astro = item.astrologer || {};
                   const isPending   = item.status === 'requested';
                   const isScheduled = item.status === 'scheduled';
+                  const isCompleted = item.status === 'completed';
                   const isPassed    = item.status === 'passed';
                   const isFailed    = item.status === 'failed';
 
                   return (
                     <tr key={item._id} className={`hover:bg-slate-50/50 transition-colors ${isPending ? 'bg-amber-50/30' : ''}`}>
-                      <td className="py-4 px-6">
+                      <td 
+                        onClick={() => handleOpenEvaluate(item)}
+                        className="py-4 px-6 cursor-pointer hover:opacity-85 transition-opacity"
+                        title="Click to view astrologer details & evaluate"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold flex-shrink-0 overflow-hidden">
+                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold flex-shrink-0 overflow-hidden shadow-xs">
                             {astro.profileImage ? (
                               <img src={astro.profileImage} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -339,8 +344,13 @@ export default function InterviewsPage() {
                             )}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-900 block">{astro.name || 'Unnamed Astrologer'}</span>
+                            <span className="font-bold text-slate-900 hover:text-[#FA5A24] transition-colors block">{astro.name || 'Unnamed Astrologer'}</span>
                             <span className="text-[10px] text-slate-400 block mt-0.5">{astro.email}</span>
+                            {item.interviewerNotes && (
+                              <span className="text-[9.5px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-mono truncate max-w-[200px] block mt-1">
+                                📝 {item.interviewerNotes}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -373,6 +383,7 @@ export default function InterviewsPage() {
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${
                           isPassed    ? 'bg-emerald-50 text-emerald-600' :
                           isFailed    ? 'bg-rose-50 text-rose-600' :
+                          isCompleted ? 'bg-indigo-50 text-indigo-600' :
                           isScheduled ? 'bg-blue-50 text-blue-600' :
                           'bg-amber-50 text-amber-600'
                         }`}>
@@ -429,7 +440,17 @@ export default function InterviewsPage() {
                             </>
                           )}
 
-                          {/* Completed (passed/failed) — re-evaluate option */}
+                          {/* Completed (Interview done) → Review Notes & Evaluate */}
+                          {isCompleted && (
+                            <button
+                              onClick={() => handleOpenEvaluate(item)}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-bold text-[10.5px] transition-all cursor-pointer shadow-sm active:scale-95"
+                            >
+                              <span>Review Notes & Approve</span>
+                            </button>
+                          )}
+
+                          {/* Passed/Failed → Status badge + Re-evaluate */}
                           {(isPassed || isFailed) && (
                             <div className="flex items-center gap-1.5">
                               <span className={`text-[10px] font-extrabold ${isPassed ? 'text-emerald-600' : 'text-rose-500'}`}>
@@ -470,6 +491,37 @@ export default function InterviewsPage() {
               </button>
             </div>
             <form onSubmit={handleScheduleSubmit} className="p-5 flex flex-col gap-4">
+              {/* Astrologer Requested Availability Slots (Quick Auto-Fill Chips) */}
+              {(() => {
+                const slots = selectedInterview?.preferredSlots || selectedInterview?.astrologer?.preferredSlots || [];
+                if (!slots.length) return null;
+                return (
+                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-2.5 flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's Requested Time Slots</span>
+                      <span className="text-[9px] text-slate-400 font-semibold">Click to auto-fill</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {slots.map((slot, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (slot.date && slot.time) {
+                              setInterviewDate(`${slot.date}T${slot.time}`);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-orange-200 hover:bg-[#FA5A24] hover:text-white text-slate-800 rounded-lg text-xs font-extrabold transition-all cursor-pointer group"
+                        >
+                          <Calendar size={11} className="text-[#FA5A24] group-hover:text-white" />
+                          <span>Option {idx + 1}: {slot.date} @ {slot.time}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-slate-600 font-bold text-xs">Interview Date & Time *</label>
                 <input
