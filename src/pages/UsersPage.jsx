@@ -414,9 +414,10 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchUsers(true);
+    // Auto-refresh every 1.5 minutes (90 seconds)
     const intervalId = setInterval(() => {
       fetchUsers(false);
-    }, 5000);
+    }, 90000);
     return () => clearInterval(intervalId);
   }, []);
 

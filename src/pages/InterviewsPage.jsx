@@ -496,27 +496,37 @@ export default function InterviewsPage() {
                 const slots = selectedInterview?.preferredSlots || selectedInterview?.astrologer?.preferredSlots || [];
                 if (!slots.length) return null;
                 return (
-                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-2.5 flex flex-col gap-1.5">
+                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-3 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's Requested Time Slots</span>
-                      <span className="text-[9px] text-slate-400 font-semibold">Click to auto-fill</span>
+                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's 2 Preferred Time Slots</span>
+                      <span className="text-[9px] text-slate-400 font-semibold">Select slot or type custom date below</span>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {slots.map((slot, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            if (slot.date && slot.time) {
-                              setInterviewDate(`${slot.date}T${slot.time}`);
-                            }
-                          }}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-orange-200 hover:bg-[#FA5A24] hover:text-white text-slate-800 rounded-lg text-xs font-extrabold transition-all cursor-pointer group"
-                        >
-                          <Calendar size={11} className="text-[#FA5A24] group-hover:text-white" />
-                          <span>Option {idx + 1}: {slot.date} @ {slot.time}</span>
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      {slots.map((slot, idx) => {
+                        const targetVal = `${slot.date}T${slot.time}`;
+                        const isSelected = interviewDate === targetVal || interviewDate.startsWith(slot.date);
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (slot.date && slot.time) {
+                                setInterviewDate(`${slot.date}T${slot.time}`);
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer ${
+                              isSelected
+                                ? "bg-[#FA5A24] text-white border-[#FA5A24] shadow-md"
+                                : "bg-white border-orange-200 text-slate-800 hover:bg-orange-50 hover:border-orange-300"
+                            }`}
+                            title="Click to select this slot for the interview"
+                          >
+                            <Calendar size={12} className={isSelected ? "text-white" : "text-[#FA5A24]"} />
+                            <span>Option {idx + 1}: {slot.date} @ {slot.time}</span>
+                            {isSelected && <span className="ml-1 bg-white/20 px-1 rounded text-[9px]">Active</span>}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 );

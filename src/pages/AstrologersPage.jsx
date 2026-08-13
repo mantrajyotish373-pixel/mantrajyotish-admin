@@ -469,10 +469,28 @@ const AstrologersPage = () => {
       })
       .catch(() => ({ success: false, data: [] }));
 
-    Promise.all([fetchAll, fetchPending])
-      .then(([allJson, pendingJson]) => {
+    const fetchInterviews = fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/interview/all`, { headers })
+      .then(res => {
+        if (!res.ok) return { success: false, data: [] };
+        return res.json();
+      })
+      .catch(() => ({ success: false, data: [] }));
+
+    Promise.all([fetchAll, fetchPending, fetchInterviews])
+      .then(([allJson, pendingJson, interviewsJson]) => {
         let verified = [];
         let pending = [];
+
+        const interviewMapByAstroId = new Map();
+        const interviewMapByEmail = new Map();
+        if (interviewsJson && interviewsJson.success && Array.isArray(interviewsJson.data)) {
+          interviewsJson.data.forEach((iv) => {
+            const astroObj = iv.astrologer || {};
+            const astroIdStr = String(astroObj._id || astroObj.id || iv.astrologer);
+            if (astroIdStr) interviewMapByAstroId.set(astroIdStr, iv);
+            if (astroObj.email) interviewMapByEmail.set(String(astroObj.email).toLowerCase(), iv);
+          });
+        }
 
         const mapAstro = (item, idx, isVerif) => {
           const capStatus = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Offline';
@@ -484,6 +502,12 @@ const AstrologersPage = () => {
               : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop';
           }
           const detailsObj = item.details || defaultAstroDetails;
+
+          const astroIdStr = String(item._id || idx);
+          const astroEmailStr = String(item.email || '').toLowerCase();
+          const ivRecord = item.interview || interviewMapByAstroId.get(astroIdStr) || interviewMapByEmail.get(astroEmailStr) || null;
+          const slots = item.preferredSlots || (ivRecord && ivRecord.preferredSlots) || [];
+
           return {
             id: item._id || idx,
             name: item.name || 'Unnamed Astrologer',
@@ -498,7 +522,8 @@ const AstrologersPage = () => {
             reviewsCount: item.reviewsCount ?? 120,
             avatar: astroAvatar,
             isVerified: isVerif,
-            interview: item.interview || null,
+            interview: ivRecord ? { ...ivRecord, preferredSlots: slots } : null,
+            preferredSlots: slots,
             appliedOn: formattedJoined,
             docsVerified: '3/5',
             raw: item,
@@ -1372,27 +1397,35 @@ const AstrologersPage = () => {
                 const slots = selectedAstro?.interview?.preferredSlots || selectedAstro?.preferredSlots || [];
                 if (!slots.length) return null;
                 return (
-                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-2.5 flex flex-col gap-1.5">
+                  <div className="bg-[#FFF9F6] border border-orange-200/80 rounded-xl p-3 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's Requested Time Slots</span>
-                      <span className="text-[9px] text-slate-400 font-semibold">Click a slot to auto-fill</span>
+                      <span className="text-[10px] font-extrabold text-[#FA5A24] uppercase tracking-wider">Astrologer's 2 Preferred Time Slots</span>
+                      <span className="text-[9px] text-slate-400 font-semibold">Select slot or type custom time below</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {slots.map((slot, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            if (slot.date) setDate(slot.date);
-                            if (slot.time) setTime(slot.time);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-200 hover:bg-[#FA5A24] hover:text-white text-slate-800 rounded-lg text-xs font-extrabold transition-all shadow-2xs cursor-pointer group"
-                          title="Click to select this slot for the interview"
-                        >
-                          <Calendar size={12} className="text-[#FA5A24] group-hover:text-white" />
-                          <span>Option {idx + 1}: {slot.date} at {slot.time}</span>
-                        </button>
-                      ))}
+                      {slots.map((slot, idx) => {
+                        const isSelected = date === slot.date && time === slot.time;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              if (slot.date) setDate(slot.date);
+                              if (slot.time) setTime(slot.time);
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer ${
+                              isSelected
+                                ? "bg-[#FA5A24] text-white border-[#FA5A24] shadow-md"
+                                : "bg-white border-orange-200 text-slate-800 hover:bg-orange-50 hover:border-orange-300"
+                            }`}
+                            title="Click to select this slot for the interview"
+                          >
+                            <Calendar size={12} className={isSelected ? "text-white" : "text-[#FA5A24]"} />
+                            <span>Option {idx + 1}: {slot.date} at {slot.time}</span>
+                            {isSelected && <span className="ml-1 bg-white/20 px-1 rounded text-[9px]">Active</span>}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 );
