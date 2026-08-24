@@ -10,7 +10,7 @@ import {
   ReferenceDot
 } from 'recharts';
 
-const data = [
+const mockData = [
   { day: 'Mon', revenue: 140000 },
   { day: 'Tue', revenue: 260000 },
   { day: 'Wed', revenue: 420000 },
@@ -20,14 +20,9 @@ const data = [
   { day: 'Sun', revenue: 270000 },
 ];
 
-const formatYAxis = (value) => {
-  if (value === 0) return '₹0';
-  return `₹${value / 100000}L`;
-};
-
-// Custom Reference Label to draw the Wednesday "₹4,20,000" speech bubble
+// Custom Reference Label to draw the speech bubble dynamically
 const CustomReferenceLabel = (props) => {
-  const { cx, cy } = props;
+  const { cx, cy, labelText } = props;
   if (cx === undefined || cy === undefined) return null;
   
   return (
@@ -58,14 +53,42 @@ const CustomReferenceLabel = (props) => {
         textAnchor="middle"
         fontFamily="Outfit"
       >
-        ₹4,20,000
+        {labelText || '₹4,20,000'}
       </text>
     </g>
   );
 };
 
-const RevenueChart = () => {
+const RevenueChart = ({ chartData }) => {
   const [filter, setFilter] = useState('Weekly');
+
+  // Decide which dataset to use (Weekly, Daily, Monthly)
+  const activeData = (chartData && chartData[filter] && chartData[filter].length > 0)
+    ? chartData[filter]
+    : mockData;
+
+  // Find max data point to draw the reference dot and speech bubble dynamically
+  const maxPoint = activeData.reduce(
+    (max, item) => (item.revenue > max.revenue) ? item : max,
+    activeData[0] || { day: 'Wed', revenue: 0 }
+  );
+
+  // Calculate dynamic scale domain and ticks
+  const maxRevenue = activeData.reduce((max, item) => item.revenue > max ? item.revenue : max, 100000);
+  const maxDomain = Math.max(10000, Math.ceil(maxRevenue / 50000) * 50000);
+  const step = maxDomain / 5;
+  const ticks = [0, step, step * 2, step * 3, step * 4, step * 5];
+
+  const formatYAxis = (value) => {
+    if (value === 0) return '₹0';
+    if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)}L`;
+    }
+    if (value >= 1000) {
+      return `₹${(value / 1000).toFixed(0)}k`;
+    }
+    return `₹${value}`;
+  };
 
   return (
     <div className="bg-white p-6 rounded-2xl border border-orange-50/50 shadow-sm flex-1 min-w-[300px]">
@@ -97,7 +120,7 @@ const RevenueChart = () => {
       <div className="w-full h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={data}
+            data={activeData}
             margin={{ top: 20, right: 10, left: -10, bottom: 0 }}
           >
             <defs>
@@ -126,8 +149,8 @@ const RevenueChart = () => {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 11, fontWeight: 500 }}
-              domain={[0, 500000]}
-              ticks={[0, 100000, 200000, 300000, 400000, 500000]}
+              domain={[0, maxDomain]}
+              ticks={ticks}
               dx={-5}
             />
 
@@ -155,18 +178,20 @@ const RevenueChart = () => {
               activeDot={{ r: 6, fill: '#FA5A24', stroke: '#FFF', strokeWidth: 2 }}
             />
 
-            {/* Permanent Callout marker on Wednesday */}
-            <ReferenceDot 
-              x="Wed" 
-              y={420000} 
-              r={5} 
-              fill="#FA5A24" 
-              stroke="white" 
-              strokeWidth={2}
-              isFront={true}
-            >
-              <CustomReferenceLabel />
-            </ReferenceDot>
+            {/* Permanent Callout marker on highest value point */}
+            {maxPoint && maxPoint.revenue > 0 && (
+              <ReferenceDot 
+                x={maxPoint.day} 
+                y={maxPoint.revenue} 
+                r={5} 
+                fill="#FA5A24" 
+                stroke="white" 
+                strokeWidth={2}
+                isFront={true}
+              >
+                <CustomReferenceLabel labelText={`₹${maxPoint.revenue.toLocaleString('en-IN')}`} />
+              </ReferenceDot>
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

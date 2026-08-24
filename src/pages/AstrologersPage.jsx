@@ -687,6 +687,76 @@ const AstrologersPage = () => {
     navigate('/astrologers/edit');
   };
 
+  const handleUpdateSubmit = async () => {
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const token = localStorage.getItem('authToken');
+    
+    const payload = {
+      name: formData.fullName,
+      phone: formData.mobile,
+      email: formData.email,
+      experience: formData.experience,
+      chatPrice: Number(formData.chatRate),
+      audioCallPrice: Number(formData.callRate),
+      videoCallPrice: Number(formData.callRate),
+      status: formData.status === 'Online' ? 'approved' : 'pending'
+    };
+
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/astrologers/${selectedAstro.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showAlert("Astrologer profile updated successfully!", "Success", "success");
+        fetchAstrologers();
+        navigate(-1);
+      } else {
+        showAlert(data.message || "Failed to update astrologer details.", "Error", "danger");
+      }
+    } catch (err) {
+      showAlert(err.message || "Network error.", "Error", "danger");
+    }
+  };
+
+  const handleDeleteAstrologer = async (astroId) => {
+    showConfirm(
+      "Are you sure you want to permanently delete this astrologer profile? This action cannot be undone.",
+      async () => {
+        const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+        const token = localStorage.getItem('authToken');
+
+        try {
+          const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/astrologers/${astroId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            showAlert("Astrologer profile deleted successfully!", "Success", "success");
+            fetchAstrologers();
+            setSelectedAstro(null);
+            navigate(-1);
+          } else {
+            showAlert(data.message || "Failed to delete profile.", "Error", "danger");
+          }
+        } catch (err) {
+          showAlert(err.message || "Network error.", "Error", "danger");
+        }
+      },
+      "Delete Profile",
+      "warning",
+      "Delete"
+    );
+  };
+
   const triggerAdd = () => {
     setFormData({
       fullName: '',
@@ -2008,9 +2078,9 @@ const AstrologersPage = () => {
               <div className="lg:col-span-2 space-y-4">
                 <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider mb-2">Basic Information</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Full Name *</label><input type="text" defaultValue={formData.fullName} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Mobile Number *</label><input type="text" defaultValue={formData.mobile} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Email Address *</label><input type="email" defaultValue={formData.email} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Full Name *</label><input type="text" value={formData.fullName} onChange={e => setFormData(prev => ({ ...prev, fullName: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Mobile Number *</label><input type="text" value={formData.mobile} onChange={e => setFormData(prev => ({ ...prev, mobile: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Email Address *</label><input type="email" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-bold text-slate-600">Gender *</label>
                     <select defaultValue={formData.gender} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
@@ -2051,14 +2121,14 @@ const AstrologersPage = () => {
                   </div>
 
                 </div>
-                <div className="flex flex-col gap-1.5 mt-3"><label className="text-[11px] font-bold text-slate-600">Experience (Years) *</label><input type="text" defaultValue={formData.experience} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                <div className="flex flex-col gap-1.5 mt-3"><label className="text-[11px] font-bold text-slate-600">Experience (Years) *</label><input type="text" value={formData.experience} onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Chat Rate *</label><input type="text" defaultValue={formData.chatRate} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Call Rate *</label><input type="text" defaultValue={formData.callRate} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Chat Rate *</label><input type="text" value={formData.chatRate} onChange={e => setFormData(prev => ({ ...prev, chatRate: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Call Rate *</label><input type="text" value={formData.callRate} onChange={e => setFormData(prev => ({ ...prev, callRate: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-slate-600">Status *</label>
-                  <select defaultValue={formData.status} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
+                  <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
                     <option>Online</option><option>Offline</option>
                   </select>
                 </div>
@@ -2067,7 +2137,7 @@ const AstrologersPage = () => {
 
             <div className="flex items-center justify-end gap-3 mt-8 border-t border-slate-100 pt-5">
               <button onClick={() => navigate(-1)} className="px-6 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-              <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-[#FA5A24] text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-sm">Update Changes</button>
+              <button onClick={handleUpdateSubmit} className="px-6 py-2.5 bg-[#FA5A24] text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-sm">Update Changes</button>
             </div>
           </div>
         </div>
@@ -2203,7 +2273,7 @@ const AstrologersPage = () => {
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><User size={14} className="text-slate-400" /><span>View Profile (User View)</span></button>
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><MessageSquare size={14} className="text-slate-400" /><span>Chat History</span></button>
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><Phone size={14} className="text-slate-400" /><span>Call History</span></button>
-                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 hover:bg-red-50 text-red-500 justify-start mt-2 transition-colors"><X size={14} className="stroke-[3]" /><span>Block Astrologer</span></button>
+                      <button onClick={() => handleDeleteAstrologer(selectedAstro.id)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 hover:bg-red-50 text-red-500 justify-start mt-2 transition-colors"><X size={14} className="stroke-[3]" /><span>Delete Astrologer Profile</span></button>
                     </div>
                   </div>
                 </div>

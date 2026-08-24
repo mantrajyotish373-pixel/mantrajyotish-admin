@@ -7,8 +7,35 @@ import {
   ChevronRight 
 } from 'lucide-react';
 
-const RecentActivities = () => {
-  const activities = [
+const RecentActivities = ({ data }) => {
+  const activities = data && data.length > 0 ? data.map(act => {
+    let Icon = Check;
+    let iconBg = 'bg-[#E6F4EA]';
+    let iconColor = 'text-[#137333]';
+
+    if (act.type === 'booking') {
+      Icon = Calendar;
+      iconBg = 'bg-[#FEF3C7]';
+      iconColor = 'text-[#D97706]';
+    } else if (act.type === 'withdraw') {
+      Icon = Wallet;
+      iconBg = 'bg-[#FFF3EE]';
+      iconColor = 'text-[#FA5A24]';
+    } else if (act.type === 'user') {
+      Icon = UserPlus;
+      iconBg = 'bg-violet-50';
+      iconColor = 'text-violet-600';
+    }
+
+    return {
+      id: act.id,
+      text: act.text,
+      time: act.time,
+      icon: Icon,
+      iconBg,
+      iconColor
+    };
+  }) : [
     {
       id: 1,
       text: 'Ravi Sharma has been approved as an Astrologer.',

@@ -42,6 +42,43 @@ function App() {
   }, [theme]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Dashboard statistics state
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setStatsLoading(true);
+      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/dashboard-stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
+      }
+      
+      const resData = await response.json();
+      if (resData.success && resData.data) {
+        setDashboardStats(resData.data);
+      } else {
+        throw new Error(resData.message || 'Invalid stats payload');
+      }
+      setStatsError(null);
+    } catch (err) {
+      console.warn("Dashboard stats error, showing offline mock fallback:", err);
+      setStatsError(err.message);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -106,6 +143,12 @@ function App() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  useEffect(() => {
+    if (activeTab === 'Dashboard') {
+      fetchDashboardStats();
+    }
+  }, [activeTab]);
+
   // Determine main panel container CSS classes
   // For both Users and Astrologers pages, lock height to screen viewport to enable inner scrolling
   const mainClass = (activeTab === 'Users' || activeTab === 'Astrologers')
@@ -121,19 +164,29 @@ function App() {
           <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>
             Dashboard
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 font-medium">
+          <p className="text-xs md:text-sm text-slate-400 font-medium flex items-center gap-2">
             Welcome back to your Astro Admin control center.
+            {statsLoading && (
+              <span className="text-[10px] bg-orange-100 text-[#FA5A24] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                Syncing live data...
+              </span>
+            )}
+            {statsError && (
+              <span className="text-[10px] bg-red-50 text-red-500 px-2 py-0.5 rounded-full font-bold">
+                Offline Mode (Demo Data)
+              </span>
+            )}
           </p>
         </div>
       </div>
 
       {/* 8 Metric Cards Grid */}
-      <DashboardCards />
+      <DashboardCards data={dashboardStats} />
 
       {/* Analytics Chart & Quick Actions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col">
-          <RevenueChart />
+          <RevenueChart chartData={dashboardStats?.revenueChart} />
         </div>
         <div className="lg:col-span-1 flex flex-col">
           <QuickActions />
@@ -141,7 +194,7 @@ function App() {
       </div>
 
       {/* Recent Activities Panel */}
-      <RecentActivities />
+      <RecentActivities data={dashboardStats?.recentActivities} />
     </>
   );
 

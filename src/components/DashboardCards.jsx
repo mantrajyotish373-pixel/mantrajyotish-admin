@@ -11,10 +11,91 @@ import {
   MessageSquare 
 } from 'lucide-react';
 
-const DashboardCards = () => {
+const DashboardCards = ({ data }) => {
   const navigate = useNavigate();
 
-  const cardsData = [
+  const cardsData = data ? [
+    {
+      title: 'Total Users',
+      value: Number(data.totalUsers || 0).toLocaleString('en-IN'),
+      trend: data.trends?.users || '0%',
+      isPositive: data.trendsIsPositive?.users !== false,
+      icon: Users,
+      iconBg: 'bg-orange-50',
+      iconColor: 'text-[#FA5A24]',
+      path: '/users'
+    },
+    {
+      title: 'Total Astrologers',
+      value: Number(data.totalAstrologers || 0).toLocaleString('en-IN'),
+      trend: data.trends?.astrologers || '0%',
+      isPositive: data.trendsIsPositive?.astrologers !== false,
+      icon: Sparkles,
+      iconBg: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+      path: '/astrologers/all'
+    },
+    {
+      title: "Today's Bookings",
+      value: Number(data.todayBookings || 0).toLocaleString('en-IN'),
+      trend: data.trends?.bookings || '0%',
+      isPositive: data.trendsIsPositive?.bookings !== false,
+      icon: Calendar,
+      iconBg: 'bg-pink-50',
+      iconColor: 'text-pink-500',
+      path: '/bookings'
+    },
+    {
+      title: "Today's Revenue",
+      value: `₹${Number(data.todayRevenue || 0).toLocaleString('en-IN')}`,
+      trend: data.trends?.revenue || '0%',
+      isPositive: data.trendsIsPositive?.revenue !== false,
+      icon: IndianRupee,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      path: '/payments'
+    },
+    {
+      title: 'Pending KYC',
+      value: Number(data.pendingKyc || 0).toLocaleString('en-IN'),
+      trend: data.trends?.kyc || '0%',
+      isPositive: data.trendsIsPositive?.kyc !== false,
+      icon: Star,
+      iconBg: 'bg-yellow-50',
+      iconColor: 'text-yellow-500',
+      path: '/kyc-verification'
+    },
+    {
+      title: 'Withdraw Requests',
+      value: Number(data.withdrawRequests || 0).toLocaleString('en-IN'),
+      trend: data.trends?.withdraw || '0%',
+      isPositive: data.trendsIsPositive?.withdraw !== false,
+      icon: Wallet,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      path: '/withdraw-requests'
+    },
+    {
+      title: 'Active Calls',
+      value: Number(data.activeCalls || 0).toLocaleString('en-IN'),
+      trend: data.trends?.calls || '0%',
+      isPositive: data.trendsIsPositive?.calls !== false,
+      icon: Phone,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-500',
+      path: '/calls'
+    },
+    {
+      title: 'Active Chats',
+      value: Number(data.activeChats || 0).toLocaleString('en-IN'),
+      trend: data.trends?.chats || '0%',
+      isPositive: data.trendsIsPositive?.chats !== false,
+      icon: MessageSquare,
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      path: '/chats'
+    },
+  ] : [
     {
       title: 'Total Users',
       value: '15,420',
