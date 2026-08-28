@@ -585,6 +585,18 @@ const AstrologersPage = () => {
               languages: Array.isArray(item.languages) && item.languages.length > 0 ? item.languages.join(', ') : 'Hindi, English',
               about: item.about || item.introduction || ('Professional Astrologer specializing in ' + formatSkills(item.skills, item.specialization || item.strengths) + '.'),
               expertise: (item.skills && item.skills.length > 0) ? item.skills : (item.specialization || ['Vedic Astrology']),
+              earnings: {
+                ...detailsObj.earnings,
+                total: '₹' + (item.totalEarnings ?? 0).toFixed(2),
+                totalCalls: item.totalCalls ?? 0,
+                totalChats: item.totalChats ?? 0,
+                breakdown: [
+                  { label: 'From Calls', value: '₹' + (item.callEarnings ?? 0).toFixed(2) },
+                  { label: 'From Chats', value: '₹' + (item.chatEarnings ?? 0).toFixed(2) },
+                  { label: 'Pooja Bookings', value: '₹0' },
+                  { label: 'Other Services', value: '₹0' }
+                ]
+              }
             }
           };
         };

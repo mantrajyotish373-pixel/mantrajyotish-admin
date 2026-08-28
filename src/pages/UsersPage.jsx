@@ -393,9 +393,9 @@ const UsersPage = () => {
                 dob: formattedDob,
                 referralCode: 'REF' + (user.phone ? user.phone.slice(-4) : '0000'),
                 totalReferrals: 0,
-                totalSpent: '₹0.00',
-                chats: 0,
-                calls: 0,
+                totalSpent: '₹' + (user.totalSpent ?? 0).toFixed(2),
+                chats: user.totalChats ?? 0,
+                calls: user.totalCalls ?? 0,
                 rating: 5.0,
                 activities: []
               }
