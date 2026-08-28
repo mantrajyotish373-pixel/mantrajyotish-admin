@@ -325,6 +325,9 @@ const UsersPage = () => {
   const [error, setError] = useState(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletModalType, setWalletModalType] = useState('add');
+  const [walletAmount, setWalletAmount] = useState('');
   const [addForm, setAddForm] = useState({
     firstName: '',
     middleName: '',
@@ -489,6 +492,66 @@ const UsersPage = () => {
       alert(`User profile creation failed: ${err.message}`);
       setIsSubmitting(false);
     });
+  };
+
+  const handleWalletUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedUser || !walletAmount) return;
+
+    const numericAmount = parseFloat(walletAmount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      alert("Please enter a valid positive amount.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const token = localStorage.getItem('authToken');
+    
+    const url = `${apiBaseUrl.replace(/\/$/, '')}/api/wallet/update-balance`;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          amount: numericAmount,
+          userId: selectedUser.id,
+          action: walletModalType
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert(json.message || "Wallet updated successfully!");
+        setIsWalletModalOpen(false);
+        setWalletAmount('');
+        
+        // Refresh users list and update selectedUser state
+        fetchUsers(false);
+        setSelectedUser(prev => {
+          if (!prev) return null;
+          const newBal = walletModalType === 'add' 
+            ? prev.walletRaw + numericAmount 
+            : Math.max(0, prev.walletRaw - numericAmount);
+          return {
+            ...prev,
+            wallet: '₹' + newBal.toFixed(2),
+            walletRaw: newBal
+          };
+        });
+      } else {
+        alert(json.message || "Failed to update wallet balance.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating wallet balance: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Filter users based on sub-tab and search query
@@ -890,11 +953,23 @@ const UsersPage = () => {
                           <Pencil size={13} className="text-slate-400" />
                           <span>Edit User</span>
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-750 justify-start transition-colors">
+                        <button 
+                          onClick={() => {
+                            setWalletModalType('add');
+                            setIsWalletModalOpen(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-750 justify-start transition-colors cursor-pointer w-full"
+                        >
                           <Plus size={13} className="text-emerald-600" />
                           <span>Add Wallet Balance</span>
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-750 justify-start transition-colors">
+                        <button 
+                          onClick={() => {
+                            setWalletModalType('deduct');
+                            setIsWalletModalOpen(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-750 justify-start transition-colors cursor-pointer w-full"
+                        >
                           <Wallet size={13} className="text-amber-500" />
                           <span>Deduct Wallet Balance</span>
                         </button>
@@ -1162,6 +1237,84 @@ const UsersPage = () => {
                     </>
                   ) : (
                     <span>Create User Profile</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Update Modal */}
+      {isWalletModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in animate-scale-up">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-orange-50/50 to-amber-50/30">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>
+                  {walletModalType === 'add' ? 'Add Wallet Balance' : 'Deduct Wallet Balance'}
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                  Adjust balance for {selectedUser.name}
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsWalletModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200/80 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleWalletUpdate} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Current Balance
+                </label>
+                <div className="text-sm font-bold text-slate-700 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100">
+                  {selectedUser.wallet}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  placeholder="Enter amount to adjust"
+                  value={walletAmount}
+                  onChange={(e) => setWalletAmount(e.target.value)}
+                  className="w-full text-xs font-bold text-slate-700 placeholder-slate-400 bg-white border border-slate-200 px-4 py-3 rounded-xl focus:outline-none focus:border-[#FA5A24] focus:ring-1 focus:ring-[#FA5A24] transition-all"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsWalletModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`flex items-center gap-1.5 px-6 py-2.5 text-white rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${walletModalType === 'add' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-500 hover:bg-rose-600'}`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent border-white animate-spin" />
+                      <span>Updating...</span>
+                    </>
+                  ) : (
+                    <span>{walletModalType === 'add' ? 'Add Balance' : 'Deduct Balance'}</span>
                   )}
                 </button>
               </div>
