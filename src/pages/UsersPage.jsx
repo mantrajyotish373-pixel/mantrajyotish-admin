@@ -18,7 +18,8 @@ import {
   UserMinus, 
   Key,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 const mockUsers = [
@@ -554,6 +555,42 @@ const UsersPage = () => {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    const confirmDelete = window.confirm(`Are you absolutely sure you want to permanently delete user "${selectedUser.name}"? This will delete all their chat/call sessions and profile details.`);
+    if (!confirmDelete) return;
+
+    setIsSubmitting(true);
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const token = localStorage.getItem('authToken');
+    
+    const url = `${apiBaseUrl.replace(/\/$/, '')}/api/user/delete/${selectedUser.id}`;
+
+    try {
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert(json.message || "User profile and related data deleted successfully!");
+        setSelectedUser(null);
+        fetchUsers(false);
+      } else {
+        alert(json.message || "Failed to delete user profile.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting user: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Filter users based on sub-tab and search query
   const filteredUsers = users.filter(user => {
     if (subTab === 'Active Users' && user.status !== 'Active') return false;
@@ -976,6 +1013,13 @@ const UsersPage = () => {
                         <button className="flex items-center gap-2 px-3 py-2 border border-red-100 rounded-lg hover:bg-red-50 text-red-500 justify-start transition-colors">
                           <UserMinus size={13} />
                           <span>Block User</span>
+                        </button>
+                        <button 
+                          onClick={handleDeleteUser}
+                          className="flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50/50 rounded-lg hover:bg-rose-50 text-rose-600 justify-start transition-colors cursor-pointer w-full"
+                        >
+                          <Trash2 size={13} className="text-rose-500" />
+                          <span>Delete User Account</span>
                         </button>
                         <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-750 justify-start transition-colors">
                           <Key size={13} className="text-slate-400" />
