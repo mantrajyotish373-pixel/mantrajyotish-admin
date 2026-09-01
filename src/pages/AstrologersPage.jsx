@@ -545,7 +545,7 @@ const AstrologersPage = () => {
         const mapAstro = (item, idx, isVerif) => {
           const capStatus = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Offline';
           const formattedJoined = item.createdAt ? formatJoinedDate(item.createdAt) : '10 May 2023';
-          let astroAvatar = item.avatar;
+          let astroAvatar = item.profileImage || item.avatar || item.profilePhoto || item.image || item.photo;
           if (!astroAvatar) {
             astroAvatar = item.gender === 'female'
               ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
