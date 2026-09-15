@@ -113,7 +113,31 @@ export default function EditProfilePage() {
     setIsUpdating(true);
     setSuccessMessage('');
 
-    // Simulate update API
+    // Save updated profile data to localStorage so it persists across refreshes
+    try {
+      const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const nameParts = fullName.trim().split(' ');
+      const firstname = nameParts[0] || 'Admin';
+      const lastname = nameParts.slice(1).join(' ') || '';
+      
+      const updatedUser = {
+        ...existingUser,
+        firstname,
+        lastname,
+        email,
+        phone: `${countryCode} ${phone}`,
+        role: role.toLowerCase().replace(' admin', ''),
+        tuloId: username,
+        bio,
+        avatar
+      };
+      
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error('Failed to update user profile in localStorage:', err);
+    }
+
+    // Simulate update API response delay
     setTimeout(() => {
       setIsUpdating(false);
       setSuccessMessage('Profile updated successfully!');
@@ -122,7 +146,7 @@ export default function EditProfilePage() {
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-    }, 1500);
+    }, 800);
   };
 
   return (
@@ -132,7 +156,7 @@ export default function EditProfilePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-shrink-0">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>
               Edit Profile
             </h1>
             <Sparkles size={18} className="text-[#FA5A24] animate-pulse" />
@@ -149,7 +173,7 @@ export default function EditProfilePage() {
 
       {/* Success alert banner */}
       {successMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs px-4 py-3.5 rounded-2xl font-semibold flex items-center gap-2 animate-slideDown shadow-sm">
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400 text-xs px-4 py-3.5 rounded-2xl font-semibold flex items-center gap-2 animate-slideDown shadow-sm">
           <span>✓</span>
           <span>{successMessage}</span>
         </div>
@@ -159,22 +183,22 @@ export default function EditProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Column: Profile Information Form (8 columns) */}
-        <form onSubmit={handleUpdateProfile} className="lg:col-span-8 bg-white border border-slate-100 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
+        <form onSubmit={handleUpdateProfile} className="lg:col-span-8 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
           
           <div>
-            <h2 className="text-sm font-bold text-slate-800" style={{ fontFamily: 'Outfit' }}>
+            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>
               Profile Information
             </h2>
           </div>
 
           {/* Profile Picture Uploader */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-slate-500">Profile Picture</label>
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Profile Picture</label>
             <div className="flex items-center gap-5 mt-1">
               <img 
                 src={avatar} 
                 alt="Profile Avatar" 
-                className="w-16 h-16 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0"
+                className="w-16 h-16 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm flex-shrink-0"
               />
               <div className="flex flex-col gap-1.5">
                 <div className="relative">
@@ -187,7 +211,7 @@ export default function EditProfilePage() {
                   />
                   <label 
                     htmlFor="avatar-upload"
-                    className="flex items-center gap-2 border border-slate-200 hover:border-[#FA5A24] hover:text-[#FA5A24] text-slate-600 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white"
+                    className="flex items-center gap-2 border border-slate-200 dark:border-slate-600 hover:border-[#FA5A24] dark:hover:border-[#FA5A24] text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white dark:bg-slate-700"
                   >
                     <UploadCloud size={14} />
                     <span>Change Photo</span>
@@ -205,7 +229,7 @@ export default function EditProfilePage() {
             
             {/* Full Name field */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -214,13 +238,13 @@ export default function EditProfilePage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter full name"
-                className="w-full bg-[#FCFAF8] text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
               />
             </div>
 
             {/* Email Address field */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Email Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -229,27 +253,27 @@ export default function EditProfilePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                className="w-full bg-[#FCFAF8] text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
               />
             </div>
 
             {/* Phone Number field */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
                 {/* Custom prefix container */}
-                <div className="flex items-center gap-1.5 bg-[#FCFAF8] border border-slate-200 rounded-xl px-3 text-xs font-bold text-slate-700">
+                <div className="flex items-center gap-1.5 bg-[#FCFAF8] dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 text-xs font-bold text-slate-700 dark:text-slate-200">
                   <span>🇮🇳</span>
                   <select 
                     value={countryCode} 
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="outline-none bg-transparent font-bold cursor-pointer"
+                    className="outline-none bg-transparent font-bold cursor-pointer text-slate-800 dark:text-slate-100"
                   >
-                    <option value="+91">+91</option>
-                    <option value="+1">+1</option>
-                    <option value="+44">+44</option>
+                    <option value="+91" className="dark:bg-slate-800"> +91</option>
+                    <option value="+1" className="dark:bg-slate-800"> +1</option>
+                    <option value="+44" className="dark:bg-slate-800"> +44</option>
                   </select>
                 </div>
                 <input
@@ -258,30 +282,30 @@ export default function EditProfilePage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Enter phone number"
-                  className="flex-1 bg-[#FCFAF8] text-slate-800 text-xs px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                  className="flex-1 bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
                 />
               </div>
             </div>
 
             {/* Role dropdown */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Role <span className="text-red-500">*</span>
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full bg-[#FCFAF8] text-slate-850 text-xs px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold cursor-pointer"
+                className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-850 dark:text-slate-100 text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold cursor-pointer"
               >
-                <option value="Super Admin">Super Admin</option>
-                <option value="Admin">Admin</option>
-                <option value="Support">Support</option>
+                <option value="Super Admin" className="dark:bg-slate-800">Super Admin</option>
+                <option value="Admin" className="dark:bg-slate-800">Admin</option>
+                <option value="Support" className="dark:bg-slate-800">Support</option>
               </select>
             </div>
 
             {/* Username input */}
             <div className="flex flex-col gap-1.5 md:col-span-2">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Username <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -294,14 +318,14 @@ export default function EditProfilePage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="w-full bg-[#FCFAF8] text-slate-800 text-xs pl-11 pr-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                  className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
                 />
               </div>
             </div>
 
             {/* Password input */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Password
               </label>
               <div className="relative">
@@ -310,7 +334,7 @@ export default function EditProfilePage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Leave blank to keep current password"
-                  className="w-full bg-[#FCFAF8] text-slate-800 text-xs px-4 pr-11 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                  className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs px-4 pr-11 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
                 />
                 <button
                   type="button"
@@ -324,7 +348,7 @@ export default function EditProfilePage() {
 
             {/* Confirm Password input */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-600">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 Confirm Password
               </label>
               <div className="relative">
@@ -333,7 +357,7 @@ export default function EditProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="w-full bg-[#FCFAF8] text-slate-800 text-xs px-4 pr-11 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold"
+                  className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs px-4 pr-11 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold"
                 />
                 <button
                   type="button"
@@ -348,7 +372,7 @@ export default function EditProfilePage() {
             {/* Bio textarea */}
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-600">Bio</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Bio</label>
                 <span className="text-[10px] text-slate-400 font-bold">{bio.length}/160</span>
               </div>
               <textarea
@@ -357,18 +381,18 @@ export default function EditProfilePage() {
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Write a brief bio..."
                 rows={4}
-                className="w-full bg-[#FCFAF8] text-slate-850 text-xs px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-[#FA5A24] focus:bg-white transition-all font-semibold resize-none"
+                className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-850 dark:text-slate-100 text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none focus:border-[#FA5A24] dark:focus:border-[#FA5A24] transition-all font-semibold resize-none"
               />
             </div>
 
           </div>
 
           {/* Form Action buttons */}
-          <div className="flex items-center justify-end gap-3 mt-4 border-t border-slate-100 pt-6">
+          <div className="flex items-center justify-end gap-3 mt-4 border-t border-slate-100 dark:border-slate-700/60 pt-6">
             <button
               type="button"
               onClick={() => navigate('/settings')}
-              className="px-6 py-2.5 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all cursor-pointer"
+              className="px-6 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -393,11 +417,11 @@ export default function EditProfilePage() {
         {/* Right Column: Profile Preview Widget (4 columns) */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700/60 shadow-sm overflow-hidden flex flex-col">
             
             {/* Card Header title */}
-            <div className="p-5 border-b border-slate-100 flex items-center">
-              <h3 className="text-sm font-bold text-slate-800" style={{ fontFamily: 'Outfit' }}>
+            <div className="p-5 border-b border-slate-100 dark:border-slate-700/60 flex items-center">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>
                 Profile Preview
               </h3>
             </div>
@@ -406,10 +430,10 @@ export default function EditProfilePage() {
             <div className="relative flex flex-col items-center">
               
               {/* Peach Gradient Top Arch */}
-              <div className="w-full h-24 bg-[#FFF2EC] relative overflow-hidden" />
+              <div className="w-full h-24 bg-[#FFF2EC] dark:bg-slate-700 relative overflow-hidden" />
               
               {/* Profile Avatar overlaying the top arch */}
-              <div className="absolute top-10 w-24 h-24 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
+              <div className="absolute top-10 w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-800 overflow-hidden shadow-md">
                 <img 
                   src={avatar} 
                   alt="Admin Avatar Preview" 
@@ -419,36 +443,36 @@ export default function EditProfilePage() {
 
               {/* User Details */}
               <div className="flex flex-col items-center mt-12.5 px-6 pb-6 text-center w-full">
-                <h4 className="text-base font-bold text-slate-800 leading-snug">
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-snug">
                   {fullName || 'Admin'}
                 </h4>
-                <span className="inline-block bg-[#FFF5F1] text-[#FA5A24] text-[10px] font-extrabold px-3 py-1 rounded-full mt-1.5 shadow-sm">
+                <span className="inline-block bg-[#FFF5F1] dark:bg-[#FA5A24]/15 text-[#FA5A24] text-[10px] font-extrabold px-3 py-1 rounded-full mt-1.5 shadow-sm">
                   {role || 'Super Admin'}
                 </span>
 
                 {/* Details List */}
-                <div className="w-full space-y-4 mt-6 border-t border-slate-100 pt-5 text-left">
+                <div className="w-full space-y-4 mt-6 border-t border-slate-100 dark:border-slate-700/60 pt-5 text-left">
                   <div className="flex items-center gap-3 text-slate-500">
                     <Mail size={14} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-[11px] font-semibold text-slate-600 truncate">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 truncate">
                       {email || 'admin@astroadmin.com'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-500">
                     <Phone size={14} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-[11px] font-semibold text-slate-600">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                       {countryCode} {phone || '98765 43210'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-500">
                     <MapPin size={14} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-[11px] font-semibold text-slate-600">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                       Jaipur, Rajasthan, India
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-500">
                     <Calendar size={14} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-[11px] font-semibold text-slate-600">
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                       Joined on 15 Mar 2024, 10:30 AM
                     </span>
                   </div>
@@ -474,9 +498,9 @@ export default function EditProfilePage() {
       </div>
 
       {/* Bottom Alert bar */}
-      <div className="bg-[#FFF5F1]/80 border border-orange-100/50 p-3.5 rounded-2xl flex items-center gap-3 shadow-sm">
+      <div className="bg-[#FFF5F1]/80 dark:bg-slate-800 border border-orange-100/50 dark:border-slate-700/60 p-3.5 rounded-2xl flex items-center gap-3 shadow-sm">
         <Info size={16} className="text-[#FA5A24] flex-shrink-0" />
-        <span className="text-[11px] md:text-xs text-slate-600 font-medium leading-normal">
+        <span className="text-[11px] md:text-xs text-slate-600 dark:text-slate-300 font-medium leading-normal">
           Changes will take effect instantly across all components.
         </span>
       </div>

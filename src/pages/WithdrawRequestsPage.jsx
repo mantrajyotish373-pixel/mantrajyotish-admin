@@ -130,10 +130,37 @@ const summaryData = [
 ];
 
 const WithdrawRequestsPage = () => {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [activeSubTab, setActiveSubTab] = useState('All Requests');
+
+  useEffect(() => {
+    setLoading(true);
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/withdraw/all`, { headers })
+      .then(res => res.ok ? res.json() : null)
+      .then(json => {
+        if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
+          setRequests(json.data);
+        } else {
+          setRequests(initialRequests);
+        }
+      })
+      .catch(() => {
+        setRequests(initialRequests);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   // Interactive approve/reject actions
   const handleApprove = (id) => {
@@ -152,10 +179,10 @@ const WithdrawRequestsPage = () => {
   const filteredRequests = useMemo(() => {
     return requests.filter(r => {
       const matchesSearch = 
-        r.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.accountDetails.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchQuery.toLowerCase());
+        String(r.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(r.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(r.accountDetails || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(r.id || '').toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesDropdown = statusFilter === 'All' || r.status === statusFilter;
 
@@ -172,7 +199,7 @@ const WithdrawRequestsPage = () => {
   const handleExportCSV = () => {
     const headers = ['Request ID,User Name,User Email,Amount,Method,Account Details,Date,Time,Status\n'];
     const rows = filteredRequests.map(r => 
-      `${r.id},"${r.user.name}",${r.user.email},${r.amount.replace('₹', '')},"${r.method}","${r.accountDetails}",${r.requestedOn.date},${r.requestedOn.time},${r.status}`
+      `${r.id},"${r.user?.name || 'User'}",${r.user?.email || 'N/A'},${String(r.amount || '').replace('₹', '')},"${r.method}","${r.accountDetails}",${r.requestedOn?.date || ''},${r.requestedOn?.time || ''},${r.status}`
     );
     const blob = new Blob([...headers, ...rows.map(ro => ro + '\n')], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -181,6 +208,53 @@ const WithdrawRequestsPage = () => {
     a.setAttribute('download', `Withdraw_Requests_${new Date().toISOString().split('T')[0]}.csv`);
     a.click();
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 select-none pb-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-44 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+            <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+          </div>
+          <div className="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+        </div>
+
+        {/* 4 Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 p-4.5 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-2.5 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="h-10 w-64 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+            <div className="h-10 w-44 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-14 bg-slate-100 dark:bg-slate-700/40 rounded-xl w-full" />
+              ))}
+            </div>
+            <div className="space-y-4">
+              <div className="h-44 bg-slate-100 dark:bg-slate-700/40 rounded-2xl w-full" />
+              <div className="h-44 bg-slate-100 dark:bg-slate-700/40 rounded-2xl w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 select-none pb-8">

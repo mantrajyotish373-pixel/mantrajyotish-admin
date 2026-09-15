@@ -22,31 +22,31 @@ export default function ConfirmModal({
     switch (type) {
       case 'success':
         return (
-          <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
+          <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 text-emerald-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
             <CheckCircle2 size={30} />
           </div>
         );
       case 'danger':
         return (
-          <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 text-red-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
+          <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-800/50 text-red-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
             <XCircle size={30} />
           </div>
         );
       case 'warning':
         return (
-          <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-100 text-amber-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
+          <div className="w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800/50 text-amber-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
             <AlertCircle size={30} />
           </div>
         );
       case 'info':
         return (
-          <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 text-blue-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
+          <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 text-blue-500 flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
             <Info size={30} />
           </div>
         );
       default:
         return (
-          <div className="w-14 h-14 rounded-full bg-orange-50 border border-orange-100 text-[#FA5A24] flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
+          <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-800/50 text-[#FA5A24] flex items-center justify-center mb-4 shadow-sm animate-scaleIn">
             <HelpCircle size={30} />
           </div>
         );
@@ -72,13 +72,13 @@ export default function ConfirmModal({
       onClick={onCancel || onConfirm}
     >
       <div 
-        className="bg-white w-full max-w-[420px] rounded-3xl p-6 shadow-2xl border border-slate-100/80 flex flex-col items-center text-center relative animate-scaleUp overflow-hidden"
+        className="bg-white dark:bg-slate-800 w-full max-w-[420px] rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700/60 flex flex-col items-center text-center relative animate-scaleUp overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onCancel || onConfirm}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-300 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
         >
           <X size={16} />
         </button>
@@ -89,7 +89,7 @@ export default function ConfirmModal({
         {/* Title */}
         {title && (
           <h3 
-            className="text-xl font-bold text-slate-850 tracking-tight" 
+            className="text-xl font-bold text-slate-850 dark:text-slate-100 tracking-tight" 
             style={{ fontFamily: 'Outfit, sans-serif' }}
           >
             {title}
@@ -97,7 +97,7 @@ export default function ConfirmModal({
         )}
 
         {/* Message */}
-        <p className="text-slate-500 text-sm font-medium leading-relaxed mt-2 mb-6 max-w-[320px]">
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mt-2 mb-6 max-w-[320px]">
           {message}
         </p>
 
@@ -107,7 +107,7 @@ export default function ConfirmModal({
             <button
               onClick={onCancel}
               disabled={isLoading}
-              className="flex-1 py-3 px-4 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition-all duration-200 cursor-pointer text-center disabled:opacity-50"
+              className="flex-1 py-3 px-4 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 active:bg-slate-300 rounded-xl transition-all duration-200 cursor-pointer text-center disabled:opacity-50"
             >
               {cancelText}
             </button>

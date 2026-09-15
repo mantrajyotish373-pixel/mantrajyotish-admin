@@ -7,7 +7,25 @@ import {
   ChevronRight 
 } from 'lucide-react';
 
-const RecentActivities = ({ data }) => {
+const RecentActivities = ({ data, isLoading }) => {
+  if (isLoading && !data) {
+    return (
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm select-none animate-pulse">
+        <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded mb-5" />
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700/40">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                <div className="h-4 w-64 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+              <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   const activities = data && data.length > 0 ? data.map(act => {
     let Icon = Check;
     let iconBg = 'bg-[#E6F4EA]';
@@ -71,9 +89,9 @@ const RecentActivities = ({ data }) => {
   ];
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-orange-50/50 shadow-sm select-none">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm select-none">
       {/* Title */}
-      <h3 className="text-lg font-bold text-slate-800 mb-5" style={{ fontFamily: 'Outfit' }}>
+      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-5" style={{ fontFamily: 'Outfit' }}>
         Recent Activities
       </h3>
 
@@ -85,21 +103,21 @@ const RecentActivities = ({ data }) => {
             <div 
               key={act.id} 
               className={`flex items-center justify-between py-4 ${
-                index !== activities.length - 1 ? 'border-b border-dashed border-slate-100' : ''
+                index !== activities.length - 1 ? 'border-b border-dashed border-slate-100 dark:border-slate-700/60' : ''
               }`}
             >
               {/* Left Content (Icon + Text) */}
               <div className="flex items-center gap-4">
-                <div className={`w-8 h-8 rounded-full ${act.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-8 h-8 rounded-full ${act.iconBg} dark:bg-slate-900/60 flex items-center justify-center flex-shrink-0`}>
                   <IconComp size={16} className={act.iconColor} />
                 </div>
-                <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
                   {act.text}
                 </p>
               </div>
 
               {/* Right Content (Time) */}
-              <span className="text-xs text-slate-400 font-semibold flex-shrink-0 ml-4">
+              <span className="text-xs text-slate-400 dark:text-slate-400 font-semibold flex-shrink-0 ml-4">
                 {act.time}
               </span>
             </div>
@@ -109,7 +127,7 @@ const RecentActivities = ({ data }) => {
 
       {/* View All Button */}
       <div className="flex justify-center mt-6">
-        <button className="flex items-center gap-1.5 px-6 py-2 border border-[#FA5A24] rounded-full text-xs font-bold text-[#FA5A24] hover:bg-[#FFF3EE] transition-all duration-300 group">
+        <button className="flex items-center gap-1.5 px-6 py-2 border border-[#FA5A24] rounded-full text-xs font-bold text-[#FA5A24] hover:bg-[#FFF3EE] dark:hover:bg-orange-950/40 transition-all duration-300 group">
           <span>View All Activities</span>
           <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
         </button>

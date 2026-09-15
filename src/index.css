@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-astro-orange: #FA5A24;
   --color-astro-dark-orange: #E14614;
@@ -35,45 +37,7 @@
   --color-violet-50: #f5f3ff;
 }
 
-.dark {
-  --color-white: #111827;
-  --color-slate-50: #0b0f19;
-  --color-slate-100: #1f2937;
-  --color-slate-200: #374151;
-  --color-slate-350: #4b5563;
-  --color-slate-400: #9ca3af;
-  --color-slate-500: #9ca3af;
-  --color-slate-600: #d1d5db;
-  --color-slate-700: #e5e7eb;
-  --color-slate-800: #f9fafb;
-  --color-slate-900: #f9fafb;
-  --color-slate-950: #030712;
-
-  --color-orange-50: #271611;
-  --color-purple-50: #1b1127;
-  --color-pink-50: #27111b;
-  --color-amber-50: #271d11;
-  --color-yellow-50: #221e0e;
-  --color-emerald-50: #0d2215;
-  --color-blue-50: #0d1727;
-  --color-violet-50: #161127;
-  
-  --color-astro-bg: #0B0F19;
-  --color-astro-peach: #1b1614;
-}
-
-/* Force dark color scheme for native inputs and scrollbars */
-html, body {
-  background-color: var(--color-slate-50);
-  color: var(--color-slate-800);
-  transition: background-color 0.2s, color 0.2s;
-}
-
-html.dark, body.dark {
-  color-scheme: dark;
-}
-
-/* Custom styles for layout, scrollbars, or animations if needed */
+/* Custom styles for layout, scrollbars, or animations */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -86,6 +50,10 @@ html.dark, body.dark {
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
 }
 
 ::-webkit-scrollbar-thumb:hover {

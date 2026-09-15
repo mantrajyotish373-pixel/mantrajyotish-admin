@@ -585,12 +585,47 @@ const AstrologersPage = () => {
               languages: Array.isArray(item.languages) && item.languages.length > 0 ? item.languages.join(', ') : 'Hindi, English',
               about: item.about || item.introduction || ('Professional Astrologer specializing in ' + formatSkills(item.skills, item.specialization || item.strengths) + '.'),
               expertise: (item.skills && item.skills.length > 0) ? item.skills : (item.specialization || ['Vedic Astrology']),
+              reviews: detailsObj.reviews || defaultAstroDetails.reviews || [
+                { id: 1, user: 'Priya Sharma', rating: 5, comment: 'Very good guidance. My confusion is cleared. Thank you so much!', date: '12 May 2025', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
+                { id: 2, user: 'Rahul Verma', rating: 5, comment: 'Accurate prediction and polite behavior. Highly recommended.', date: '10 May 2025', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' },
+                { id: 3, user: 'Anjali Patel', rating: 4, comment: 'Helped me a lot in career decision. Really great experience.', date: '08 May 2025', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop' }
+              ],
+              documents: detailsObj.documents || defaultAstroDetails.documents || [
+                { id: 1, name: 'Aadhaar Card', status: 'Verified', date: '10 May 2023' },
+                { id: 2, name: 'PAN Card', status: 'Verified', date: '10 May 2023' },
+                { id: 3, name: 'Experience Certificate', status: 'Verified', date: '10 May 2023' },
+                { id: 4, name: 'Photo', status: 'Verified', date: '10 May 2023' },
+                { id: 5, name: 'Bank Details', status: 'Verified', date: '10 May 2023' }
+              ],
+              availability: detailsObj.availability || defaultAstroDetails.availability || [
+                { day: 'Monday', isActive: true, start: '10:00 AM', end: '10:00 PM' },
+                { day: 'Tuesday', isActive: true, start: '10:00 AM', end: '10:00 PM' },
+                { day: 'Wednesday', isActive: true, start: '10:00 AM', end: '10:00 PM' },
+                { day: 'Thursday', isActive: false, start: 'Day Off', end: 'Day Off' },
+                { day: 'Friday', isActive: true, start: '10:00 AM', end: '10:00 PM' },
+                { day: 'Saturday', isActive: true, start: '10:00 AM', end: '10:00 PM' },
+                { day: 'Sunday', isActive: true, start: '10:00 AM', end: '10:00 PM' }
+              ],
+              services: detailsObj.services && detailsObj.services.length > 0 ? detailsObj.services : [
+                { id: 1, name: 'Kundli Reading', price: item.callRate || 500, duration: '30 Min', isActive: true },
+                { id: 2, name: 'Career Guidance', price: item.chatRate || 400, duration: '30 Min', isActive: true },
+                { id: 3, name: 'Marriage Prediction', price: 700, duration: '30 Min', isActive: true }
+              ],
               earnings: {
                 ...detailsObj.earnings,
                 total: '₹' + (item.totalEarnings ?? 0).toFixed(2),
                 totalCalls: item.totalCalls ?? 0,
                 totalChats: item.totalChats ?? 0,
-                breakdown: [
+                chartData: detailsObj.earnings?.chartData?.length ? detailsObj.earnings.chartData : [
+                  { date: '1 May', earn: 2800 },
+                  { date: '6 May', earn: 3500 },
+                  { date: '11 May', earn: 2100 },
+                  { date: '16 May', earn: 4800 },
+                  { date: '21 May', earn: 3900 },
+                  { date: '26 May', earn: 5400 },
+                  { date: '30 May', earn: 4500 }
+                ],
+                breakdown: detailsObj.earnings?.breakdown?.length ? detailsObj.earnings.breakdown : [
                   { label: 'From Calls', value: '₹' + (item.callEarnings ?? 0).toFixed(2) },
                   { label: 'From Chats', value: '₹' + (item.chatEarnings ?? 0).toFixed(2) },
                   { label: 'Pooja Bookings', value: '₹0' },
@@ -644,10 +679,10 @@ const AstrologersPage = () => {
 
   useEffect(() => {
     fetchAstrologers(true);
-    // Auto-refresh every 90 minutes (5400000 ms)
+    // Auto-refresh astrologer list silently every 60 seconds
     const intervalId = setInterval(() => {
       fetchAstrologers(false);
-    }, 5400000);
+    }, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -922,8 +957,8 @@ const AstrologersPage = () => {
     return (
       <>
         {/* Header Title */}
-        <div className="flex flex-col flex-shrink-0">
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>
+        <div className="flex flex-col flex-shrink-0 mb-4">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>
             Astrologers
           </h1>
           <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mt-1">
@@ -936,10 +971,10 @@ const AstrologersPage = () => {
         </div>
 
         {/* Table Card wrapper */}
-        <div className="flex-1 bg-white p-5 md:p-6 rounded-2xl border border-orange-50/50 shadow-sm flex flex-col overflow-hidden h-full w-full">
+        <div className="flex-1 bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm flex flex-col overflow-hidden h-full w-full">
           
           {error && (
-            <div className="bg-amber-50 border border-amber-100 text-amber-700 text-[11px] px-4 py-2.5 rounded-xl font-medium mb-4 flex items-center justify-between flex-shrink-0">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 text-amber-700 dark:text-amber-300 text-[11px] px-4 py-2.5 rounded-xl font-medium mb-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2">
                 <AlertCircle size={14} className="text-amber-500" />
                 <span>Could not fetch live profiles ({error}).</span>
@@ -948,7 +983,7 @@ const AstrologersPage = () => {
                 onClick={() => {
                   window.location.reload();
                 }}
-                className="underline font-bold text-amber-800 hover:text-amber-900 ml-2"
+                className="underline font-bold text-amber-800 dark:text-amber-200 hover:text-amber-900 ml-2"
               >
                 Retry
               </button>
@@ -956,7 +991,7 @@ const AstrologersPage = () => {
           )}
 
           {/* Subtabs header */}
-          <div className="flex items-center gap-6 border-b border-slate-100 pb-1 mb-5 overflow-x-auto scrollbar-none flex-shrink-0">
+          <div className="flex items-center gap-6 border-b border-slate-100 dark:border-slate-700/60 pb-1 mb-5 overflow-x-auto scrollbar-none flex-shrink-0">
             {getSubTabs().map((tab) => {
               const isSelected = location.pathname === tab.path;
               return (
@@ -966,13 +1001,13 @@ const AstrologersPage = () => {
                   className={`pb-3 text-xs md:text-sm font-semibold border-b-2 transition-all duration-200 whitespace-nowrap outline-none flex items-center gap-1.5 ${
                     isSelected
                       ? 'border-[#FA5A24] text-[#FA5A24]'
-                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                      : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
                   <span>{tab.label}</span>
                   {tab.badge && (
                     <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                      isSelected ? 'bg-orange-50 text-[#FA5A24]' : 'bg-slate-100 text-slate-500'
+                      isSelected ? 'bg-orange-50 dark:bg-orange-950/50 text-[#FA5A24]' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
                     }`}>
                       {tab.badge}
                     </span>
@@ -990,7 +1025,7 @@ const AstrologersPage = () => {
                 placeholder="Search astrologers by name, skill or mobile..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white text-slate-700 placeholder-slate-400 text-xs px-4 py-2.5 pr-10 rounded-xl outline-none border border-slate-200 focus:border-orange-200 transition-all duration-200"
+                className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 text-xs px-4 py-2.5 pr-10 rounded-xl outline-none border border-slate-200 dark:border-slate-700 focus:border-orange-200 dark:focus:border-orange-500/50 transition-all duration-200"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                 <Search size={15} />
@@ -1000,13 +1035,13 @@ const AstrologersPage = () => {
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end font-semibold">
               <button 
                 onClick={() => fetchAstrologers(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-600 hover:bg-orange-50/50 hover:border-orange-200 hover:text-[#FA5A24] transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-orange-50/50 dark:hover:bg-slate-700/50 hover:border-orange-200 hover:text-[#FA5A24] transition-all duration-200 cursor-pointer"
                 title="Refresh Astrologer Data"
               >
                 <RefreshCw size={14} className={isLoading ? "animate-spin text-[#FA5A24]" : ""} />
                 <span>Refresh</span>
               </button>
-              <button className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-600 hover:bg-slate-50 transition-all duration-200">
+              <button className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all duration-200">
                 <SlidersHorizontal size={14} />
                 <span>Filters</span>
               </button>
@@ -1025,204 +1060,168 @@ const AstrologersPage = () => {
             {activeSubTab === 'Pending Approval' ? (
               /* PENDING APPROVAL LIST */
               <table className="w-full text-left border-collapse min-w-[700px]">
-                <thead className="sticky top-0 bg-white z-10">
-                  <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-white">
-                    <th className="pb-3 pl-2 font-bold bg-white">Astrologer</th>
-                    <th className="pb-3 font-bold bg-white">Experience</th>
-                    <th className="pb-3 font-bold bg-white">Rate/Min</th>
-                    <th className="pb-3 font-bold bg-white">Applied On</th>
-                    <th className="pb-3 font-bold bg-white">Documents</th>
-                    <th className="pb-3 font-bold bg-white">Interview</th>
-                    <th className="pb-3 pr-2 text-right font-bold bg-white">Action</th>
+                <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
+                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-white dark:bg-slate-800">
+                    <th className="pb-3 pl-2 font-bold bg-white dark:bg-slate-800">Astrologer</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Experience</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Rate/Min</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Applied On</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Documents</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Interview</th>
+                    <th className="pb-3 pr-2 text-right font-bold bg-white dark:bg-slate-800">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs text-slate-700 dark:text-slate-200">
                   {isLoading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-8 text-slate-400 font-medium">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-6 h-6 rounded-full border-2 border-t-[#FA5A24] border-orange-100 animate-spin" />
-                          <span>Loading pending profiles...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : paginatedList.map((astro) => (
-                    <tr key={astro.id} className="hover:bg-orange-50/20 transition-colors duration-150">
-                      <td 
-                        onClick={() => triggerDetails(astro)}
-                        className="py-3.5 pl-2 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                        title="Click to view full astrologer profile"
-                      >
-                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 shadow-xs" />
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800 hover:text-[#FA5A24] transition-colors">{astro.name}</span>
-                          <span className="text-[10px] text-slate-400 font-semibold">{astro.skill}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 font-semibold text-slate-500">{astro.experience}</td>
-                      <td className="py-3.5 font-bold text-slate-800">{astro.rateMin}</td>
-                      <td className="py-3.5 font-medium text-slate-400">{astro.appliedOn}</td>
-                      <td className="py-3.5 font-bold text-slate-800">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">{astro.docsVerified}</span>
-                      </td>
-                      <td className="py-3.5">
-                        {(() => {
-                          const status = getInterviewStatus(astro.id);
-                          
-                          let displayDate = "";
-                          if (astro.interview && astro.interview.interviewDate) {
-                            displayDate = formatJoinedDate(astro.interview.interviewDate);
-                          } else {
-                            const scheduledData = localStorage.getItem('interview_schedule_' + astro.id);
-                            if (scheduledData) {
-                              const parsed = JSON.parse(scheduledData);
-                              displayDate = parsed.date;
-                            }
-                          }
-                          
-                          if (status === 'cleared' || status === 'passed') {
-                            return (
-                              <button 
-                                onClick={() => {
-                                  setSelectedAstro(astro);
-                                  setIsInterviewDrawerOpen(true);
-                                }}
-                                className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-bold border border-emerald-100 flex items-center gap-1 w-fit hover:bg-emerald-100/60 transition-colors cursor-pointer select-none"
-                              >
-                                <Check size={10} className="stroke-[3]" /> Passed (View)
-                              </button>
-                            );
-                          }
-                          if (status === 'failed') {
-                            return (
-                              <button 
-                                onClick={() => {
-                                  setSelectedAstro(astro);
-                                  setIsInterviewDrawerOpen(true);
-                                }}
-                                className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[9px] font-bold border border-rose-100 hover:bg-rose-100/60 transition-colors cursor-pointer select-none"
-                              >
-                                Failed (View)
-                              </button>
-                            );
-                          }
-                          if (status === 'scheduled' || displayDate) {
-                            return (
-                              <button 
-                                onClick={() => {
-                                  setSelectedAstro(astro);
-                                  setIsInterviewDrawerOpen(true);
-                                }}
-                                className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[9px] font-bold border border-blue-100 hover:bg-blue-100/60 transition-colors cursor-pointer select-none"
-                              >
-                                Scheduled ({displayDate || "Pending Date"})
-                              </button>
-                            );
-                          }
-                          if (status === 'requested') {
-                            return (
-                              <button 
-                                onClick={() => {
-                                  setSelectedAstro(astro);
-                                  setIsInterviewDrawerOpen(true);
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-orange-100 animate-pulse hover:bg-orange-200 text-orange-700 text-[9px] font-extrabold transition-all duration-200 border border-orange-200 cursor-pointer"
-                              >
-                                Review Request ⚡
-                              </button>
-                            );
-                          }
-                          return (
-                            <button 
-                              onClick={() => {
-                                setSelectedAstro(astro);
-                                setIsInterviewDrawerOpen(true);
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100/60 text-[#FA5A24] text-[9px] font-extrabold transition-all duration-200 border border-orange-100 cursor-pointer"
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="py-3.5 pl-2 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                          <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+                        </td>
+                        <td className="py-3.5"><div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-3 w-14 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-5 w-14 bg-slate-200 dark:bg-slate-700 rounded-full" /></td>
+                        <td className="py-3.5"><div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5 pr-2 text-right"><div className="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : paginatedList.map((astro) => {
+                    const status = getInterviewStatus(astro.id);
+                    return (
+                      <tr key={astro.id} className="hover:bg-orange-50/20 dark:hover:bg-slate-700/40 transition-colors duration-150">
+                        <td 
+                          onClick={() => triggerDetails(astro)}
+                          className="py-3.5 pl-2 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                          title="Click to view full astrologer profile"
+                        >
+                          <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-700 shadow-xs" />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-800 dark:text-slate-100 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] transition-colors">{astro.name}</span>
+                            <span className="text-[10px] text-slate-400 font-semibold">{astro.skill}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 font-semibold text-slate-500 dark:text-slate-400">{astro.experience}</td>
+                        <td className="py-3.5 font-bold text-slate-800 dark:text-slate-100">{astro.rateMin}</td>
+                        <td className="py-3.5 font-semibold text-slate-400">
+                          {astro.details?.memberSince || 'Recent'}
+                        </td>
+                        <td className="py-3.5">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-[#137333] dark:text-emerald-400 text-[10px] font-bold">
+                            Uploaded
+                          </span>
+                        </td>
+                        <td className="py-3.5">
+                          {status.status === 'scheduled' ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                              Scheduled ({status.details?.platform || 'Agora'})
+                            </span>
+                          ) : status.status === 'passed' ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">
+                              Passed
+                            </span>
+                          ) : status.status === 'failed' ? (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50">
+                              Failed
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                              Not Scheduled
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 pr-2 text-right">
+                          <div className="inline-flex items-center gap-1.5 justify-end">
+                            <button
+                              onClick={() => triggerInterview(astro)}
+                              className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 rounded-lg text-[10px] font-extrabold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                              title="Schedule or Manage Interview"
                             >
-                              Schedule Interview
+                              <Video size={11} />
+                              <span>{status.status === 'scheduled' ? 'Manage' : 'Interview'}</span>
                             </button>
-                          );
-                        })()}
-                      </td>
-                      <td className="py-3.5 pr-2 text-right">
-                        <div className="inline-flex items-center gap-1.5">
-                          <button 
-                            onClick={() => handleVerifyStatusChange(astro, 'approved')}
-                            className={`w-6 h-6 rounded flex items-center justify-center transition-all ${
-                              getInterviewStatus(astro.id) === 'cleared'
-                                ? "bg-[#E6F4EA] text-[#137333] hover:bg-[#d8eddcf0]"
-                                : "bg-slate-100 text-slate-400 opacity-60 cursor-not-allowed"
-                            }`}
-                            title={getInterviewStatus(astro.id) === 'cleared' ? 'Approve Astrologer' : 'Clear interview first to approve'}
-                          >
-                            <Check size={12} className="stroke-[3]" />
-                          </button>
-                          <button 
-                            onClick={() => handleVerifyStatusChange(astro, 'rejected')}
-                            className="w-6 h-6 rounded bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100/70 transition-colors"
-                          >
-                            <X size={12} className="stroke-[3]" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            <button
+                              onClick={() => handleApprovePending(astro.id)}
+                              className="px-2.5 py-1 bg-[#137333] hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                              title="Approve Astrologer"
+                            >
+                              <Check size={12} />
+                              <span>Approve</span>
+                            </button>
+                            <button
+                              onClick={() => handleRejectPending(astro.id)}
+                              className="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
+                              title="Reject Application"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             ) : (
               /* VERIFIED/ALL LIST */
               <table className="w-full text-left border-collapse min-w-[750px]">
-                <thead className="sticky top-0 bg-white z-10">
-                  <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-white">
-                    <th className="pb-3 pl-2 font-bold bg-white">Astrologer</th>
-                    <th className="pb-3 font-bold bg-white">Expertise</th>
-                    <th className="pb-3 font-bold bg-white">Experience</th>
-                    <th className="pb-3 font-bold bg-white">Rate/Min</th>
-                    <th className="pb-3 font-bold bg-white">Status</th>
-                    <th className="pb-3 font-bold bg-white">Rating</th>
-                    <th className="pb-3 pr-2 text-right font-bold bg-white">Action</th>
+                <thead className="sticky top-0 bg-white dark:bg-slate-800 z-10">
+                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-white dark:bg-slate-800">
+                    <th className="pb-3 pl-2 font-bold bg-white dark:bg-slate-800">Astrologer</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Expertise</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Experience</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Rate/Min</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Status</th>
+                    <th className="pb-3 font-bold bg-white dark:bg-slate-800">Rating</th>
+                    <th className="pb-3 pr-2 text-right font-bold bg-white dark:bg-slate-800">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs text-slate-700 dark:text-slate-200">
                   {isLoading ? (
-                    <tr>
-                      <td colSpan={7} className="text-center py-8 text-slate-400 font-medium">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-6 h-6 rounded-full border-2 border-t-[#FA5A24] border-orange-100 animate-spin" />
-                          <span>Loading astrologer profiles...</span>
-                        </div>
-                      </td>
-                    </tr>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="animate-pulse">
+                        <td className="py-3.5 pl-2 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                          <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+                        </td>
+                        <td className="py-3.5"><div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-3 w-14 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5"><div className="h-5 w-14 bg-slate-200 dark:bg-slate-700 rounded-full" /></td>
+                        <td className="py-3.5"><div className="h-3 w-10 bg-slate-200 dark:bg-slate-700 rounded" /></td>
+                        <td className="py-3.5 pr-2 text-right"><div className="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded ml-auto" /></td>
+                      </tr>
+                    ))
                   ) : paginatedList.map((astro) => (
-                    <tr key={astro.id} className="hover:bg-orange-50/20 transition-colors duration-150">
+                    <tr key={astro.id} className="hover:bg-orange-50/20 dark:hover:bg-slate-700/40 transition-colors duration-150">
                       <td 
                         onClick={() => triggerDetails(astro)}
                         className="py-3.5 pl-2 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                         title="Click to view full astrologer profile"
                       >
-                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 shadow-xs" />
-                        <span className="font-bold text-slate-800 hover:text-[#FA5A24] transition-colors">{astro.name}</span>
+                        <img src={astro.avatar} alt={astro.name} className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-700 shadow-xs" />
+                        <span className="font-bold text-slate-800 dark:text-slate-100 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] transition-colors">{astro.name}</span>
                       </td>
-                      <td className="py-3.5 font-bold"><span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px]">{astro.skill}</span></td>
-                      <td className="py-3.5 font-semibold text-slate-500">{astro.experience}</td>
-                      <td className="py-3.5 font-bold text-slate-500">
+                      <td className="py-3.5 font-bold"><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-[10px]">{astro.skill}</span></td>
+                      <td className="py-3.5 font-semibold text-slate-500 dark:text-slate-400">{astro.experience}</td>
+                      <td className="py-3.5 font-bold text-slate-500 dark:text-slate-400">
                         <div className="flex flex-col text-[11px] leading-tight">
-                          <span className="text-slate-800">{astro.rateMin}</span>
+                          <span className="text-slate-800 dark:text-slate-100">{astro.rateMin}</span>
                           <span className="text-slate-400 font-semibold">{astro.chatRateMin}</span>
                         </div>
                       </td>
                       <td className="py-3.5">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                           astro.status === 'Online' 
-                            ? 'bg-[#E6F4EA] text-[#137333]' 
+                            ? 'bg-[#E6F4EA] dark:bg-emerald-950/50 text-[#137333] dark:text-emerald-400' 
                             : astro.status === 'Busy'
-                            ? 'bg-amber-50 text-amber-600'
-                            : 'bg-slate-100 text-slate-500'
+                            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
                         }`}>{astro.status}</span>
                       </td>
                       <td className="py-3.5">
-                        <div className="flex items-center gap-1 font-bold text-slate-800">
+                        <div className="flex items-center gap-1 font-bold text-slate-800 dark:text-slate-100">
                           <Star size={13} className="text-amber-500 fill-amber-500" />
                           <span>{astro.rating}</span>
                           <span className="text-[10px] text-slate-400 font-medium">({astro.reviewsCount})</span>
@@ -1230,8 +1229,8 @@ const AstrologersPage = () => {
                       </td>
                       <td className="py-3.5 pr-2 text-right">
                         <div className="inline-flex items-center gap-1">
-                          <button onClick={() => triggerEdit(astro)} className="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Profile"><Pencil size={14} /></button>
-                          <button className="p-1 text-slate-400 hover:text-slate-600 rounded"><MoreVertical size={14} /></button>
+                          <button onClick={() => triggerEdit(astro)} className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded" title="Edit Profile"><Pencil size={14} /></button>
+                          <button className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"><MoreVertical size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -1242,23 +1241,23 @@ const AstrologersPage = () => {
           </div>
 
           {/* Pagination controls */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mt-5 border-t border-slate-100 pt-4 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between mt-5 border-t border-slate-100 dark:border-slate-700/60 pt-4 flex-shrink-0">
             {/* Showing status & Page size selector */}
             <div className="flex items-center gap-3">
-              <span className="text-[11px] text-slate-500 font-semibold">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
                 Showing {filteredList.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredList.length)} of {filteredList.length} astrologers
               </span>
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 border-l border-slate-200 pl-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-3">
                 <span>Show:</span>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg px-2 py-1 outline-none focus:border-orange-200 cursor-pointer"
+                  className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold rounded-lg px-2 py-1 outline-none focus:border-orange-200 dark:focus:border-orange-500/50 cursor-pointer"
                 >
-                  <option value={10}>10 / page</option>
-                  <option value={20}>20 / page</option>
-                  <option value={50}>50 / page</option>
-                  <option value={100}>100 / page</option>
+                  <option value={10} className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">10 / page</option>
+                  <option value={20} className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">20 / page</option>
+                  <option value={50} className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">50 / page</option>
+                  <option value={100} className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">100 / page</option>
                 </select>
               </div>
             </div>
@@ -1269,7 +1268,7 @@ const AstrologersPage = () => {
               <button 
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
                 title="First Page"
               >
                 &laquo;
@@ -1278,7 +1277,7 @@ const AstrologersPage = () => {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
                 title="Previous Page"
               >
                 &lt;
@@ -1296,7 +1295,7 @@ const AstrologersPage = () => {
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-150 ${
                       isActive 
                         ? 'bg-[#FA5A24] text-white shadow-sm' 
-                        : 'border border-slate-200 text-slate-600 hover:bg-orange-50/60 hover:text-[#FA5A24]'
+                        : 'border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-orange-50/60 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24]'
                     }`}
                   >
                     {p}
@@ -1308,7 +1307,7 @@ const AstrologersPage = () => {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
                 title="Next Page"
               >
                 &gt;
@@ -1317,7 +1316,7 @@ const AstrologersPage = () => {
               <button 
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 text-xs font-bold hover:bg-orange-50 hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
+                className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 text-xs font-bold hover:bg-orange-50 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-all"
                 title="Last Page"
               >
                 &raquo;
@@ -1722,80 +1721,80 @@ const AstrologersPage = () => {
         </div>
       } />
 
-      {/* Add route */}
-      <Route path="add" element={
-        <div className="flex-1 flex flex-col overflow-y-auto h-full w-full bg-[#FCFAF8] p-4 md:p-6 lg:p-8 space-y-6">
-          {/* Celestial Header Banner */}
-          <div className="bg-gradient-to-r from-[#FFF9F6] via-[#FFF3EC] to-[#FFE8DC] border border-orange-100/50 rounded-3xl p-6 md:p-8 flex items-center justify-between relative overflow-hidden flex-shrink-0 shadow-sm">
-            <div className="flex items-start gap-4 z-10">
-              <button 
-                onClick={() => navigate(-1)} 
-                className="w-10 h-10 rounded-full bg-white/90 border border-orange-100 hover:bg-white flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all shadow-sm cursor-pointer"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <div className="flex flex-col text-left">
-                <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Outfit' }}>Add New Astrologer</h2>
-                <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Create a complete profile and start helping people.</p>
+        {/* Add route */}
+        <Route path="add" element={
+          <div className="flex-1 flex flex-col overflow-y-auto h-full w-full bg-[#FCFAF8] dark:bg-slate-900 p-4 md:p-6 lg:p-8 space-y-6">
+            {/* Celestial Header Banner */}
+            <div className="bg-gradient-to-r from-[#FFF9F6] via-[#FFF3EC] to-[#FFE8DC] dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border border-orange-100/50 dark:border-slate-700/60 rounded-3xl p-6 md:p-8 flex items-center justify-between relative overflow-hidden flex-shrink-0 shadow-sm">
+              <div className="flex items-start gap-4 z-10">
+                <button 
+                  onClick={() => navigate(-1)} 
+                  className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-700/90 border border-orange-100 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-200 hover:text-slate-900 transition-all shadow-sm cursor-pointer"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <div className="flex flex-col text-left">
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>Add New Astrologer</h2>
+                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Create a complete profile and start helping people.</p>
+                </div>
+              </div>
+              {/* Meditating Figure Celestial SVG */}
+              <div className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 opacity-90">
+                <svg className="w-24 h-24 text-orange-500/90 drop-shadow-md select-none" viewBox="0 0 200 200" fill="none">
+                  {/* Outer rotating zodiac rings */}
+                  <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" className="animate-[spin_40s_linear_infinite]" />
+                  <circle cx="100" cy="100" r="72" stroke="currentColor" strokeWidth="1" className="opacity-60" />
+                  <circle cx="100" cy="100" r="64" stroke="currentColor" strokeWidth="1.5" strokeDasharray="8 4" className="animate-[spin_25s_linear_infinite_reverse]" />
+                  
+                  {/* Zodiac symbols or dots around the circle */}
+                  <g className="animate-[spin_60s_linear_infinite]">
+                    <circle cx="100" cy="28" r="3" fill="currentColor" />
+                    <circle cx="100" cy="172" r="3" fill="currentColor" />
+                    <circle cx="28" cy="100" r="3" fill="currentColor" />
+                    <circle cx="172" cy="100" r="3" fill="currentColor" />
+                    <circle cx="150" cy="50" r="2.5" fill="currentColor" />
+                    <circle cx="50" cy="150" r="2.5" fill="currentColor" />
+                    <circle cx="50" cy="50" r="2.5" fill="currentColor" />
+                    <circle cx="150" cy="150" r="2.5" fill="currentColor" />
+                  </g>
+
+                  {/* Meditating human figure in the center */}
+                  <path 
+                    d="M100 65 C103 65 106 62 106 59 C106 56 103 53 100 53 C97 53 94 56 94 59 C94 62 97 65 100 65 Z 
+                       M100 69 C93 69 88 74 87 81 C86 86 89 91 93 94 L93 115 C85 118 78 122 75 128 C74 130 75 132 77 133 C84 135 116 135 123 133 C125 132 126 130 125 128 C122 122 115 118 107 115 L107 94 C111 91 114 86 113 81 C112 74 107 69 100 69 Z" 
+                    fill="#7C2D12" 
+                  />
+                  
+                  {/* Decorative aura glow around meditator */}
+                  <circle cx="100" cy="59" r="16" stroke="currentColor" strokeWidth="0.5" className="opacity-40 animate-pulse" />
+                  <path d="M78 98 C72 105 70 115 76 122" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+                  <path d="M122 98 C128 105 130 115 124 122" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+                </svg>
               </div>
             </div>
-            {/* Meditating Figure Celestial SVG */}
-            <div className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 opacity-90">
-              <svg className="w-24 h-24 text-orange-500/90 drop-shadow-md select-none" viewBox="0 0 200 200" fill="none">
-                {/* Outer rotating zodiac rings */}
-                <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" className="animate-[spin_40s_linear_infinite]" />
-                <circle cx="100" cy="100" r="72" stroke="currentColor" strokeWidth="1" className="opacity-60" />
-                <circle cx="100" cy="100" r="64" stroke="currentColor" strokeWidth="1.5" strokeDasharray="8 4" className="animate-[spin_25s_linear_infinite_reverse]" />
-                
-                {/* Zodiac symbols or dots around the circle */}
-                <g className="animate-[spin_60s_linear_infinite]">
-                  <circle cx="100" cy="28" r="3" fill="currentColor" />
-                  <circle cx="100" cy="172" r="3" fill="currentColor" />
-                  <circle cx="28" cy="100" r="3" fill="currentColor" />
-                  <circle cx="172" cy="100" r="3" fill="currentColor" />
-                  <circle cx="150" cy="50" r="2.5" fill="currentColor" />
-                  <circle cx="50" cy="150" r="2.5" fill="currentColor" />
-                  <circle cx="50" cy="50" r="2.5" fill="currentColor" />
-                  <circle cx="150" cy="150" r="2.5" fill="currentColor" />
-                </g>
 
-                {/* Meditating human figure in the center */}
-                <path 
-                  d="M100 65 C103 65 106 62 106 59 C106 56 103 53 100 53 C97 53 94 56 94 59 C94 62 97 65 100 65 Z 
-                     M100 69 C93 69 88 74 87 81 C86 86 89 91 93 94 L93 115 C85 118 78 122 75 128 C74 130 75 132 77 133 C84 135 116 135 123 133 C125 132 126 130 125 128 C122 122 115 118 107 115 L107 94 C111 91 114 86 113 81 C112 74 107 69 100 69 Z" 
-                  fill="#7C2D12" 
-                />
-                
-                {/* Decorative aura glow around meditator */}
-                <circle cx="100" cy="59" r="16" stroke="currentColor" strokeWidth="0.5" className="opacity-40 animate-pulse" />
-                <path d="M78 98 C72 105 70 115 76 122" stroke="currentColor" strokeWidth="1" className="opacity-50" />
-                <path d="M122 98 C128 105 130 115 124 122" stroke="currentColor" strokeWidth="1" className="opacity-50" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Form Container Card */}
-          <form onSubmit={handleFormSubmit} className="w-full bg-white rounded-3xl border border-slate-100 shadow-sm p-6 md:p-8 space-y-8">
+            {/* Form Container Card */}
+            <form onSubmit={handleFormSubmit} className="w-full bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700/60 shadow-sm p-6 md:p-8 space-y-8">
             
             {registerError && (
-              <div className="bg-red-50 border border-red-100 text-red-700 text-xs px-4 py-3 rounded-2xl font-semibold flex items-center gap-2 text-left">
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs px-4 py-3 rounded-2xl font-semibold flex items-center gap-2 text-left">
                 <AlertCircle size={15} className="text-red-500 flex-shrink-0" />
                 <span>{registerError}</span>
               </div>
             )}
 
             {/* Profile Photo Uploader */}
-            <div className="flex flex-col md:flex-row items-center justify-between border-b border-slate-100 pb-6 gap-6">
+            <div className="flex flex-col md:flex-row items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-6 gap-6">
               <div className="text-left w-full md:w-auto">
-                <h4 className="text-sm font-bold text-slate-800">Profile Photo</h4>
-                <p className="text-xs text-slate-400 font-semibold mt-1">Upload a clear photo to build trust</p>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Profile Photo</h4>
+                <p className="text-xs text-slate-400 dark:text-slate-400 font-semibold mt-1">Upload a clear photo to build trust</p>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="relative cursor-pointer group">
-                  <div className="w-20 h-20 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm group-hover:bg-orange-100/50 transition-colors">
+                  <div className="w-20 h-20 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 flex items-center justify-center shadow-sm group-hover:bg-orange-100/50 transition-colors">
                     <Camera size={22} className="text-[#FA5A24]" />
                   </div>
-                  <div className="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-[#FA5A24] border border-white flex items-center justify-center text-white text-xs font-bold shadow-md">
+                  <div className="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full bg-[#FA5A24] border border-white dark:border-slate-800 flex items-center justify-center text-white text-xs font-bold shadow-md">
                     +
                   </div>
                 </div>
@@ -1809,10 +1808,10 @@ const AstrologersPage = () => {
             {/* Basic Information */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-left">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[#FA5A24] shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-[#FA5A24] shadow-sm">
                   <User size={16} />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">Basic Information</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Basic Information</h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1826,7 +1825,7 @@ const AstrologersPage = () => {
                       type="text" 
                       name="fullName"
                       placeholder="Full Name *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -1842,7 +1841,7 @@ const AstrologersPage = () => {
                       type="text" 
                       name="mobile"
                       placeholder="Mobile Number *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -1858,7 +1857,7 @@ const AstrologersPage = () => {
                       type="email" 
                       name="email"
                       placeholder="Email Address *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -1874,7 +1873,7 @@ const AstrologersPage = () => {
                       type="text" 
                       name="location"
                       placeholder="Location (City, Country) *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                   </div>
@@ -1890,13 +1889,13 @@ const AstrologersPage = () => {
                       type={showPassword ? 'text' : 'password'} 
                       name="password"
                       placeholder="Password *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
                       {showPassword ? <Eye size={15} /> : <EyeOff size={15} />}
                     </button>
@@ -1913,13 +1912,13 @@ const AstrologersPage = () => {
                       type={showConfirmPassword ? 'text' : 'password'} 
                       name="confirmPassword"
                       placeholder="Confirm Password *" 
-                      className="w-full bg-white border border-slate-200 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold"
+                      className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       required
                     />
                     <button 
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
                       {showConfirmPassword ? <Eye size={15} /> : <EyeOff size={15} />}
                     </button>
@@ -1931,10 +1930,10 @@ const AstrologersPage = () => {
             {/* About You */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-left">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[#FA5A24] shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-[#FA5A24] shadow-sm">
                   <FileText size={16} />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">About You</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">About You</h4>
               </div>
 
               <div className="flex flex-col gap-1.5 text-left">
@@ -1945,7 +1944,7 @@ const AstrologersPage = () => {
                     maxLength={300}
                     value={aboutText}
                     onChange={(e) => setAboutText(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-xs px-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 font-semibold h-32 resize-none pr-12 pb-6"
+                    className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-4 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-800 dark:text-slate-100 font-semibold h-32 resize-none pr-12 pb-6 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   <div className="absolute right-3.5 bottom-3.5 text-[10px] font-bold text-slate-400">
                     {aboutText.length}/300
@@ -1957,10 +1956,10 @@ const AstrologersPage = () => {
             {/* Experience */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-left">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[#FA5A24] shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-[#FA5A24] shadow-sm">
                   <Star size={16} />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">Experience</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Experience</h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1971,15 +1970,15 @@ const AstrologersPage = () => {
                   </div>
                   <select 
                     name="experience"
-                    className="w-full bg-white border border-slate-200 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-500 font-semibold appearance-none cursor-pointer"
+                    className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-700 dark:text-slate-100 font-semibold appearance-none cursor-pointer"
                   >
-                    <option>Experience</option>
-                    <option>1 Year</option>
-                    <option>2 Years</option>
-                    <option>3 Years</option>
-                    <option>5 Years</option>
-                    <option>8 Years</option>
-                    <option>10+ Years</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Experience</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">1 Year</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">2 Years</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">3 Years</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">5 Years</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">8 Years</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">10+ Years</option>
                   </select>
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <ChevronLeft size={14} className="-rotate-90" />
@@ -1993,14 +1992,14 @@ const AstrologersPage = () => {
                   </div>
                   <select 
                     name="languages"
-                    className="w-full bg-white border border-slate-200 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-500 font-semibold appearance-none cursor-pointer"
+                    className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-700 dark:text-slate-100 font-semibold appearance-none cursor-pointer"
                   >
-                    <option>Languages Known</option>
-                    <option>Hindi</option>
-                    <option>English</option>
-                    <option>Hindi, English</option>
-                    <option>Sanskrit</option>
-                    <option>Bengali</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Languages Known</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Hindi</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">English</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Hindi, English</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Sanskrit</option>
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Bengali</option>
                   </select>
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <ChevronLeft size={14} className="-rotate-90" />
@@ -2012,10 +2011,10 @@ const AstrologersPage = () => {
             {/* Qualification */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-left">
-                <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[#FA5A24] shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-[#FA5A24] shadow-sm">
                   <GraduationCap size={16} />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">Qualification</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Qualification</h4>
               </div>
 
               {/* Highest Qualification Select */}
@@ -2025,14 +2024,14 @@ const AstrologersPage = () => {
                 </div>
                 <select 
                   name="qualification"
-                  className="w-full bg-white border border-slate-200 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-500 font-semibold appearance-none cursor-pointer"
+                  className="w-full bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs pl-10 pr-10 py-3 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 text-slate-700 dark:text-slate-100 font-semibold appearance-none cursor-pointer"
                 >
-                  <option>Highest Qualification</option>
-                  <option>High School</option>
-                  <option>Bachelor's Degree</option>
-                  <option>Master's Degree</option>
-                  <option>Doctorate</option>
-                  <option>Diploma in Astrology</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Highest Qualification</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">High School</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Bachelor's Degree</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Master's Degree</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Doctorate</option>
+                  <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Diploma in Astrology</option>
                 </select>
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                   <ChevronLeft size={14} className="-rotate-90" />
@@ -2041,12 +2040,12 @@ const AstrologersPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">
               <button 
                 type="button"
                 onClick={() => navigate(-1)} 
                 disabled={isRegistering}
-                className="w-full sm:flex-1 py-3 px-6 rounded-xl border border-[#FA5A24] text-xs font-bold text-[#FA5A24] hover:bg-orange-50/50 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full sm:flex-1 py-3 px-6 rounded-xl border border-[#FA5A24] text-xs font-bold text-[#FA5A24] hover:bg-orange-50/50 dark:hover:bg-orange-500/10 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
               >
                 Cancel
               </button>
@@ -2076,79 +2075,79 @@ const AstrologersPage = () => {
       <Route path="edit" element={
         <div className="flex-1 flex flex-col overflow-hidden h-full w-full">
           <div className="flex items-center gap-3 mb-4 flex-shrink-0 select-none">
-            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-slate-500"><ChevronLeft size={16} /></button>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-slate-800 leading-tight" style={{ fontFamily: 'Outfit' }}>Edit Astrologer</h2>
+            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-300"><ChevronLeft size={16} /></button>
+            <div className="flex flex-col text-left">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight" style={{ fontFamily: 'Outfit' }}>Edit Astrologer</h2>
               <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold mt-0.5">
                 <span>Dashboard</span><span>&gt;</span><span>Astrologers</span><span>&gt;</span><span className="text-[#FA5A24]">Edit Astrologer</span>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm pr-4">
+          <div className="flex-1 overflow-y-auto min-h-0 bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm pr-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-4">
-                <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider mb-2">Basic Information</h4>
+                <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider mb-2 text-left">Basic Information</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Full Name *</label><input type="text" value={formData.fullName} onChange={e => setFormData(prev => ({ ...prev, fullName: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Mobile Number *</label><input type="text" value={formData.mobile} onChange={e => setFormData(prev => ({ ...prev, mobile: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Email Address *</label><input type="email" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-600">Gender *</label>
-                    <select defaultValue={formData.gender} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
-                      <option>Male</option><option>Female</option>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Full Name *</label><input type="text" value={formData.fullName} onChange={e => setFormData(prev => ({ ...prev, fullName: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Mobile Number *</label><input type="text" value={formData.mobile} onChange={e => setFormData(prev => ({ ...prev, mobile: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Email Address *</label><input type="email" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Gender *</label>
+                    <select defaultValue={formData.gender} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100">
+                      <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Male</option><option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Female</option>
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Date of Birth *</label><input type="text" defaultValue={formData.dob} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Languages Known *</label><input type="text" defaultValue={formData.languages} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2"><label className="text-[11px] font-bold text-slate-600">Address *</label><input type="text" defaultValue={formData.address} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">City *</label><input type="text" defaultValue={formData.city} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-600">State *</label>
-                    <select defaultValue={formData.state} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
-                      <option>Delhi</option><option>Uttar Pradesh</option><option>Maharashtra</option>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Date of Birth *</label><input type="text" defaultValue={formData.dob} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Languages Known *</label><input type="text" defaultValue={formData.languages} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 sm:col-span-2 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Address *</label><input type="text" defaultValue={formData.address} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">City *</label><input type="text" defaultValue={formData.city} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">State *</label>
+                    <select defaultValue={formData.state} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100">
+                      <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Delhi</option><option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Uttar Pradesh</option><option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Maharashtra</option>
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Pincode *</label><input type="text" defaultValue={formData.pincode} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                  <div className="flex flex-col gap-1.5 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Pincode *</label><input type="text" defaultValue={formData.pincode} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700 dark:text-slate-100" /></div>
                 </div>
               </div>
 
               <div className="lg:col-span-1 space-y-4">
-                <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider mb-2">Profile & Charges</h4>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-600">Profile Photo *</label>
+                <h4 className="text-xs font-extrabold text-[#FA5A24] uppercase tracking-wider mb-2 text-left">Profile & Charges</h4>
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Profile Photo *</label>
                   <div className="flex items-center gap-4">
                     {(selectedAstro?.raw?.profileImage || selectedAstro?.avatar) ? (
                       <img 
                         src={selectedAstro?.raw?.profileImage || selectedAstro?.avatar} 
                         alt="Astro Avatar" 
-                        className="w-16 h-16 rounded-full object-cover border border-slate-100 shadow" 
+                        className="w-16 h-16 rounded-full object-cover border border-slate-100 dark:border-slate-700 shadow" 
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-orange-100 border border-slate-100 shadow flex items-center justify-center text-[#FA5A24] font-extrabold text-lg">
+                      <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-500/10 border border-slate-100 dark:border-slate-700 shadow flex items-center justify-center text-[#FA5A24] font-extrabold text-lg">
                         {(selectedAstro?.name || 'A').charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <button className="px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl text-[10px] font-bold text-slate-600 transition-colors">Change Photo</button>
+                    <button className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-300 transition-colors">Change Photo</button>
                   </div>
 
                 </div>
-                <div className="flex flex-col gap-1.5 mt-3"><label className="text-[11px] font-bold text-slate-600">Experience (Years) *</label><input type="text" value={formData.experience} onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Chat Rate *</label><input type="text" value={formData.chatRate} onChange={e => setFormData(prev => ({ ...prev, chatRate: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
-                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600">Call Rate *</label><input type="text" value={formData.callRate} onChange={e => setFormData(prev => ({ ...prev, callRate: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700" /></div>
+                <div className="flex flex-col gap-1.5 mt-3 text-left"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Experience (Years) *</label><input type="text" value={formData.experience} onChange={e => setFormData(prev => ({ ...prev, experience: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                <div className="grid grid-cols-2 gap-3 text-left">
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Chat Rate *</label><input type="text" value={formData.chatRate} onChange={e => setFormData(prev => ({ ...prev, chatRate: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
+                  <div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Call Rate *</label><input type="text" value={formData.callRate} onChange={e => setFormData(prev => ({ ...prev, callRate: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100" /></div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-600">Status *</label>
-                  <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))} className="bg-white border border-slate-200 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-200 font-semibold text-slate-700">
-                    <option>Online</option><option>Offline</option>
+                <div className="flex flex-col gap-1.5 text-left">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Status *</label>
+                  <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-orange-500 font-semibold text-slate-700 dark:text-slate-100">
+                    <option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Online</option><option className="dark:bg-slate-800 text-slate-800 dark:text-slate-100">Offline</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 mt-8 border-t border-slate-100 pt-5">
-              <button onClick={() => navigate(-1)} className="px-6 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+            <div className="flex items-center justify-end gap-3 mt-8 border-t border-slate-100 dark:border-slate-700/60 pt-5">
+              <button onClick={() => navigate(-1)} className="px-6 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
               <button onClick={handleUpdateSubmit} className="px-6 py-2.5 bg-[#FA5A24] text-white rounded-xl text-xs font-bold hover:bg-orange-600 shadow-sm">Update Changes</button>
             </div>
           </div>
@@ -2159,9 +2158,9 @@ const AstrologersPage = () => {
       <Route path="details" element={selectedAstro && (
         <div className="flex-1 flex flex-col overflow-hidden h-full w-full">
           <div className="flex items-center gap-3 mb-4 flex-shrink-0 select-none">
-            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-slate-500"><ChevronLeft size={16} /></button>
+            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400"><ChevronLeft size={16} /></button>
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-slate-800 leading-tight" style={{ fontFamily: 'Outfit' }}>Astrologer Details</h2>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight" style={{ fontFamily: 'Outfit' }}>Astrologer Details</h2>
               <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold mt-0.5">
                 <span>Dashboard</span><span>&gt;</span><span>Astrologers</span><span>&gt;</span><span className="text-[#FA5A24]">{selectedAstro.name}</span>
               </div>
@@ -2170,13 +2169,13 @@ const AstrologersPage = () => {
 
           <div className="flex-1 flex flex-col xl:flex-row gap-6 items-stretch overflow-hidden w-full min-h-0">
             {/* Left Column: Profile Card + Vertical Menu */}
-            <div className="w-full xl:w-64 bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex-shrink-0 flex flex-col items-center text-center">
-              <img src={selectedAstro.avatar} alt={selectedAstro.name} className="w-20 h-20 rounded-full object-cover border border-slate-100 shadow-md mb-3" />
-              <h3 className="text-base font-bold text-slate-800 leading-tight" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
+            <div className="w-full xl:w-64 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm p-5 flex-shrink-0 flex flex-col items-center text-center">
+              <img src={selectedAstro.avatar} alt={selectedAstro.name} className="w-20 h-20 rounded-full object-cover border border-slate-100 dark:border-slate-700 shadow-md mb-3" />
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
               <span className="text-[10px] text-slate-400 font-bold block mt-1">{selectedAstro.experience} Experience</span>
               
               {/* Vertical Tabs List */}
-              <div className="w-full mt-6 space-y-1.5 text-left text-xs font-bold border-t border-slate-100 pt-5">
+              <div className="w-full mt-6 space-y-1.5 text-left text-xs font-bold border-t border-slate-100 dark:border-slate-700/60 pt-5">
                 {['Overview', 'Services', 'Earnings', 'Reviews', 'Documents', 'Availability'].map((tab) => {
                   const isActive = detailTab === tab;
                   return (
@@ -2185,8 +2184,8 @@ const AstrologersPage = () => {
                       onClick={() => setDetailTab(tab)}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
                         isActive
-                          ? 'text-[#FA5A24] bg-[#FFF5F1]'
-                          : 'text-slate-500 hover:text-[#FA5A24] hover:bg-slate-50/50'
+                          ? 'text-[#FA5A24] bg-[#FFF5F1] dark:bg-[#FA5A24]/15'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-[#FA5A24] hover:bg-slate-50/50 dark:hover:bg-slate-700/40'
                       }`}
                     >
                       <span>{tab}</span>
@@ -2202,12 +2201,12 @@ const AstrologersPage = () => {
             {detailTab === 'Overview' && (
               <div className="space-y-6">
                 {/* 4 Metrics Header Card */}
-                <div className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 justify-between">
+                <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 p-5 rounded-2xl flex flex-col sm:flex-row items-center gap-5 justify-between">
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold text-slate-800" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
-                      <span className="px-2 py-0.5 rounded-full bg-[#E6F4EA] text-[#137333] text-[9px] font-bold">Online</span>
-                      <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">✓ Verified</span>
+                      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>{selectedAstro.name}</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-[#E6F4EA] dark:bg-emerald-950/50 text-[#137333] dark:text-emerald-400 text-[9px] font-bold">Online</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded font-bold">✓ Verified</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 font-semibold mt-2">
                       <span className="flex items-center gap-1"><Languages size={13} /> {selectedAstro.details.languages}</span>
@@ -2217,10 +2216,10 @@ const AstrologersPage = () => {
 
                   <div className="grid grid-cols-4 gap-3 w-full sm:w-auto mt-4 sm:mt-0 max-w-lg">
                     {[
-                      { label: 'Call Rate', value: `${selectedAstro.rateMin.split('/')[0]}/min`, bg: 'bg-[#FFF3EE]', text: 'text-[#FA5A24]' },
-                      { label: 'Chat Rate', value: `${selectedAstro.chatRateMin.split('/')[0]}/min`, bg: 'bg-[#FFF3EE]', text: 'text-[#FA5A24]' },
-                      { label: 'Total Clients', value: selectedAstro.details.totalClients, bg: 'bg-purple-50/50', text: 'text-purple-600' },
-                      { label: 'Positive Rating', value: selectedAstro.details.positiveRating, bg: 'bg-amber-50/50', text: 'text-amber-600' }
+                      { label: 'Call Rate', value: `${selectedAstro.rateMin.split('/')[0]}/min`, bg: 'bg-[#FFF3EE] dark:bg-orange-950/40', text: 'text-[#FA5A24]' },
+                      { label: 'Chat Rate', value: `${selectedAstro.chatRateMin.split('/')[0]}/min`, bg: 'bg-[#FFF3EE] dark:bg-orange-950/40', text: 'text-[#FA5A24]' },
+                      { label: 'Total Clients', value: selectedAstro.details.totalClients, bg: 'bg-purple-50/50 dark:bg-purple-950/40', text: 'text-purple-600 dark:text-purple-400' },
+                      { label: 'Positive Rating', value: selectedAstro.details.positiveRating, bg: 'bg-amber-50/50 dark:bg-amber-950/40', text: 'text-amber-600 dark:text-amber-400' }
                     ].map((box, index) => (
                       <div key={index} className={`rounded-xl p-3 flex flex-col items-center justify-center text-center ${box.bg} min-w-[85px]`}>
                         <span className={`text-[13px] font-extrabold ${box.text}`} style={{ fontFamily: 'Outfit' }}>{box.value}</span>
@@ -2233,59 +2232,59 @@ const AstrologersPage = () => {
                 {/* About & Expertise Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                   <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">About</h4>
-                      <p className="text-xs font-semibold text-slate-600 leading-relaxed">{selectedAstro.details.about}</p>
+                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm">
+                      <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-3">About</h4>
+                      <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">{selectedAstro.details.about}</p>
                     </div>
-                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">Expertise</h4>
+                    <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm">
+                      <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-3">Expertise</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedAstro.details.expertise.map((tag, idx) => (
-                          <span key={idx} className="px-3 py-1.5 rounded-xl bg-orange-50/60 text-[#FA5A24] text-[10px] font-bold">{tag}</span>
+                          <span key={idx} className="px-3 py-1.5 rounded-xl bg-orange-50/60 dark:bg-orange-950/40 text-[#FA5A24] text-[10px] font-bold">{tag}</span>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Actions</h4>
+                  <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm space-y-4">
+                    <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Actions</h4>
                     <div className="flex flex-col gap-2.5 text-xs font-bold text-left">
                       {!selectedAstro.isVerified ? (
                         <>
                           <button 
                             onClick={() => handleVerifyStatusChange(selectedAstro, 'approved')} 
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 justify-start transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 justify-start transition-colors cursor-pointer"
                           >
                             <CheckCircle size={14} />
                             <span>Approve & Verify</span>
                           </button>
                           <button 
                             onClick={() => handleVerifyStatusChange(selectedAstro, 'rejected')} 
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-100 hover:bg-rose-50 text-rose-600 justify-start transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-100 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 justify-start transition-colors cursor-pointer"
                           >
                             <X size={14} className="stroke-[2.5]" />
                             <span>Reject Profile</span>
                           </button>
                         </>
                       ) : (
-                        <div className="px-4 py-2 bg-emerald-50 rounded-xl text-[10px] font-bold text-emerald-700 flex items-center gap-1.5 justify-center">
+                        <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 justify-center">
                           <CheckCircle size={12} />
                           <span>Status: Approved (Verified)</span>
                         </div>
                       )}
 
                       {selectedAstro.status === 'rejected' && (
-                        <div className="px-4 py-2 bg-rose-50 rounded-xl text-[10px] font-bold text-rose-700 flex items-center gap-1.5 justify-center">
+                        <div className="px-4 py-2 bg-rose-50 dark:bg-rose-950/50 rounded-xl text-[10px] font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1.5 justify-center">
                           <X size={12} />
                           <span>Status: Rejected</span>
                         </div>
                       )}
 
-                      <button onClick={() => triggerEdit(selectedAstro)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><Pencil size={14} className="text-slate-400" /><span>Edit Astrologer</span></button>
-                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><User size={14} className="text-slate-400" /><span>View Profile (User View)</span></button>
-                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><MessageSquare size={14} className="text-slate-400" /><span>Chat History</span></button>
-                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-700 justify-start transition-colors"><Phone size={14} className="text-slate-400" /><span>Call History</span></button>
-                      <button onClick={() => handleDeleteAstrologer(selectedAstro.id)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 hover:bg-red-50 text-red-500 justify-start mt-2 transition-colors"><X size={14} className="stroke-[3]" /><span>Delete Astrologer Profile</span></button>
+                      <button onClick={() => triggerEdit(selectedAstro)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><Pencil size={14} className="text-slate-400" /><span>Edit Astrologer</span></button>
+                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><User size={14} className="text-slate-400" /><span>View Profile (User View)</span></button>
+                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><MessageSquare size={14} className="text-slate-400" /><span>Chat History</span></button>
+                      <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><Phone size={14} className="text-slate-400" /><span>Call History</span></button>
+                      <button onClick={() => handleDeleteAstrologer(selectedAstro.id)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 dark:border-rose-900/50 hover:bg-red-50 dark:hover:bg-rose-950/50 text-red-500 dark:text-rose-400 justify-start mt-2 transition-colors cursor-pointer"><X size={14} className="stroke-[3]" /><span>Delete Astrologer Profile</span></button>
                     </div>
                   </div>
                 </div>
@@ -2293,28 +2292,28 @@ const AstrologersPage = () => {
             )}
 
             {detailTab === 'Services' && (
-              <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm">
                 <div className="flex items-center justify-between mb-5">
-                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Services Offered</h4>
+                  <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Services Offered</h4>
                   <button className="flex items-center gap-1 bg-[#FA5A24] text-white px-3.5 py-2 rounded-xl text-[10px] font-bold hover:bg-orange-600"><Plus size={12} /><span>Add New Service</span></button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <tr className="border-b border-slate-100 dark:border-slate-700/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <th className="pb-3 pl-2">Service</th><th className="pb-3">Price</th><th className="pb-3">Duration</th><th className="pb-3 pr-2 text-right">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                      {selectedAstro.details.services.map((srv) => (
-                        <tr key={srv.id} className="hover:bg-slate-50/50">
-                          <td className="py-3.5 pl-2 font-bold text-slate-800">{srv.name}</td>
-                          <td className="py-3.5 font-bold text-slate-500">₹{srv.price}</td>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs text-slate-700 dark:text-slate-200">
+                      {(selectedAstro.details?.services || []).map((srv) => (
+                        <tr key={srv.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/40">
+                          <td className="py-3.5 pl-2 font-bold text-slate-800 dark:text-slate-100">{srv.name}</td>
+                          <td className="py-3.5 font-bold text-slate-500 dark:text-slate-300">₹{srv.price}</td>
                           <td className="py-3.5 font-semibold text-slate-400">{srv.duration}</td>
                           <td className="py-3.5 pr-2 text-right">
                             <label className="relative inline-flex items-center cursor-pointer select-none">
                               <input type="checkbox" defaultChecked={srv.isActive} className="sr-only peer" />
-                              <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 peer-checked:bg-emerald-600"></div>
+                              <div className="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 peer-checked:bg-emerald-600"></div>
                             </label>
                           </td>
                         </tr>
@@ -2329,17 +2328,17 @@ const AstrologersPage = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-4 gap-4">
                   {[
-                    { label: 'Total Earnings', value: selectedAstro.details.earnings.total, bg: 'bg-[#E6F4EA]/40', color: 'text-emerald-600', icon: TrendingUp },
-                    { label: 'This Month', value: selectedAstro.details.earnings.thisMonth, bg: 'bg-blue-50/50', color: 'text-blue-600', icon: Calendar },
-                    { label: 'Total Calls', value: selectedAstro.details.earnings.totalCalls, bg: 'bg-[#FFF3EE]', color: 'text-[#FA5A24]', icon: Phone },
-                    { label: 'Total Chats', value: selectedAstro.details.earnings.totalChats, bg: 'bg-purple-50/50', color: 'text-purple-600', icon: MessageSquare }
+                    { label: 'Total Earnings', value: selectedAstro.details.earnings.total, bg: 'bg-[#E6F4EA]/40 dark:bg-emerald-950/40', color: 'text-emerald-600 dark:text-emerald-400', icon: TrendingUp },
+                    { label: 'This Month', value: selectedAstro.details.earnings.thisMonth, bg: 'bg-blue-50/50 dark:bg-blue-950/40', color: 'text-blue-600 dark:text-blue-400', icon: Calendar },
+                    { label: 'Total Calls', value: selectedAstro.details.earnings.totalCalls, bg: 'bg-[#FFF3EE] dark:bg-orange-950/40', color: 'text-[#FA5A24]', icon: Phone },
+                    { label: 'Total Chats', value: selectedAstro.details.earnings.totalChats, bg: 'bg-purple-50/50 dark:bg-purple-950/40', color: 'text-purple-600 dark:text-purple-400', icon: MessageSquare }
                   ].map((stat, idx) => {
                     const StatIcon = stat.icon;
                     return (
-                      <div key={idx} className="p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 bg-white">
+                      <div key={idx} className="p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex items-center gap-3 bg-white dark:bg-slate-800">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${stat.bg}`}><StatIcon size={16} className={stat.color} /></div>
                         <div className="flex flex-col">
-                          <span className="text-[14px] font-extrabold text-slate-800" style={{ fontFamily: 'Outfit' }}>{stat.value}</span>
+                          <span className="text-[14px] font-extrabold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>{stat.value}</span>
                           <span className="text-[8px] text-slate-400 font-extrabold uppercase mt-0.5 tracking-wider">{stat.label}</span>
                         </div>
                       </div>
@@ -2347,31 +2346,31 @@ const AstrologersPage = () => {
                   })}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                  <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Earnings Overview</h4>
-                      <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-2.5 py-1 rounded-full">This Month</span>
+                      <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Earnings Overview</h4>
+                      <span className="text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full">This Month</span>
                     </div>
                     <div className="w-full h-[220px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={selectedAstro.details.earnings.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <defs><linearGradient id="astroEarn" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FA5A24" stopOpacity={0.2} /><stop offset="95%" stopColor="#FA5A24" stopOpacity={0} /></linearGradient></defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F8FAFC" />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
                           <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} />
                           <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 9 }} />
-                          <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #FFF1EC' }} />
+                          <Tooltip contentStyle={{ borderRadius: 8, backgroundColor: '#1E293B', border: '1px solid #334155' }} />
                           <Area type="monotone" dataKey="earn" stroke="#FA5A24" strokeWidth={2} fillOpacity={1} fill="url(#astroEarn)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-                    <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-4">Earnings Summary</h4>
+                  <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex flex-col">
+                    <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-4">Earnings Summary</h4>
                     <div className="space-y-3.5 flex-1 justify-center flex flex-col">
                       {selectedAstro.details.earnings.breakdown.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between border-b border-dashed border-slate-100 pb-2.5">
-                          <span className="text-[11px] font-semibold text-slate-500">{item.label}</span>
-                          <span className="text-[12px] font-bold text-slate-800">{item.value}</span>
+                        <div key={idx} className="flex items-center justify-between border-b border-dashed border-slate-100 dark:border-slate-700 pb-2.5">
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{item.label}</span>
+                          <span className="text-[12px] font-bold text-slate-800 dark:text-slate-100">{item.value}</span>
                         </div>
                       ))}
                     </div>
@@ -2382,8 +2381,8 @@ const AstrologersPage = () => {
 
             {detailTab === 'Reviews' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center text-center items-center">
-                  <h4 className="text-2xl font-extrabold text-slate-800" style={{ fontFamily: 'Outfit' }}>4.9</h4>
+                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex flex-col justify-center text-center items-center">
+                  <h4 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>4.9</h4>
                   <span className="text-[10px] text-slate-400 font-bold uppercase mt-1">Out of 5</span>
                   <div className="flex items-center gap-0.5 my-3 text-amber-500">{Array(5).fill(0).map((_, i) => <Star key={i} size={15} className="fill-current" />)}</div>
                   <span className="text-[10px] text-slate-400 font-bold mb-5">(1250 Reviews)</span>
@@ -2391,27 +2390,27 @@ const AstrologersPage = () => {
                     {[
                       { star: 5, pct: 84 }, { star: 4, pct: 12 }, { star: 3, pct: 3 }, { star: 2, pct: 1 }, { star: 1, pct: 0 }
                     ].map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
+                      <div key={idx} className="flex items-center gap-3 text-[10px] font-bold text-slate-500 dark:text-slate-400">
                         <span className="w-8 text-left">{item.star} Star</span>
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-amber-500 rounded-full" style={{ width: `${item.pct}%` }}></div></div>
+                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-amber-500 rounded-full" style={{ width: `${item.pct}%` }}></div></div>
                         <span className="w-8 text-right">{item.pct}%</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
-                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-4">Recent Reviews</h4>
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex flex-col">
+                  <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-4">Recent Reviews</h4>
                   <div className="space-y-4">
-                    {selectedAstro.details.reviews.map((rev) => (
-                      <div key={rev.id} className="flex items-start gap-3 pb-4 border-b border-slate-100 last:border-b-0 last:pb-0">
+                    {(selectedAstro.details?.reviews || []).map((rev) => (
+                      <div key={rev.id} className="flex items-start gap-3 pb-4 border-b border-slate-100 dark:border-slate-700/60 last:border-b-0 last:pb-0">
                         <img src={rev.avatar} alt={rev.user} className="w-8 h-8 rounded-full object-cover shadow-sm flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between flex-wrap gap-1">
-                            <h5 className="text-[11px] font-bold text-slate-800">{rev.user}</h5>
+                            <h5 className="text-[11px] font-bold text-slate-800 dark:text-slate-100">{rev.user}</h5>
                             <span className="text-[9px] text-slate-400 font-semibold">{rev.date}</span>
                           </div>
-                          <div className="flex items-center gap-0.5 text-amber-500 my-1">{Array(5).fill(0).map((_, i) => <Star key={i} size={11} className={i < rev.rating ? 'fill-current' : 'text-slate-200'} />)}</div>
-                          <p className="text-[11px] font-semibold text-slate-600 leading-relaxed">{rev.comment}</p>
+                          <div className="flex items-center gap-0.5 text-amber-500 my-1">{Array(5).fill(0).map((_, i) => <Star key={i} size={11} className={i < rev.rating ? 'fill-current' : 'text-slate-200 dark:text-slate-700'} />)}</div>
+                          <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">{rev.comment}</p>
                         </div>
                       </div>
                     ))}
@@ -2421,29 +2420,29 @@ const AstrologersPage = () => {
             )}
 
             {detailTab === 'Documents' && (
-              <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-5">Uploaded Documents</h4>
+              <div className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm">
+                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-5">Uploaded Documents</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <tr className="border-b border-slate-100 dark:border-slate-700/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <th className="pb-3 pl-2">Document</th><th className="pb-3">Status</th><th className="pb-3">Uploaded On</th><th className="pb-3 pr-2 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                      {selectedAstro.details.documents.map((doc) => (
-                        <tr key={doc.id} className="hover:bg-slate-50/50">
-                          <td className="py-3.5 pl-2 font-bold text-slate-800">{doc.name}</td>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs text-slate-700 dark:text-slate-200">
+                      {(selectedAstro.details?.documents || []).map((doc) => (
+                        <tr key={doc.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/40">
+                          <td className="py-3.5 pl-2 font-bold text-slate-800 dark:text-slate-100">{doc.name}</td>
                           <td className="py-3.5">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>{doc.status}
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>{doc.status}
                             </span>
                           </td>
                           <td className="py-3.5 font-semibold text-slate-400">{doc.date}</td>
                           <td className="py-3.5 pr-2 text-right">
                             <div className="inline-flex items-center gap-1">
-                              <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded bg-slate-50"><Eye size={13} /></button>
-                              <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded bg-slate-50"><Download size={13} /></button>
+                              <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded bg-slate-50 dark:bg-slate-700"><Eye size={13} /></button>
+                              <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded bg-slate-50 dark:bg-slate-700"><Download size={13} /></button>
                             </div>
                           </td>
                         </tr>
@@ -2455,30 +2454,30 @@ const AstrologersPage = () => {
             )}
 
             {detailTab === 'Availability' && (
-              <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
+              <div className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-5 flex-shrink-0">
-                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Set Weekly Availability</h4>
-                  <button className="flex items-center gap-1 border border-slate-200 hover:bg-slate-50 px-3.5 py-2 rounded-xl text-[10px] font-bold text-slate-600"><Plus size={12} /><span>Add Time Slot</span></button>
+                  <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Set Weekly Availability</h4>
+                  <button className="flex items-center gap-1 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 px-3.5 py-2 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-300"><Plus size={12} /><span>Add Time Slot</span></button>
                 </div>
                 <div className="space-y-4">
-                  {selectedAstro.details.availability.map((dayObj, index) => (
-                    <div key={index} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border ${dayObj.isActive ? 'border-orange-50 bg-[#FFFDFB]/40' : 'border-slate-100 bg-slate-50/40 opacity-70'}`}>
+                  {(selectedAstro.details?.availability || []).map((dayObj, index) => (
+                    <div key={index} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border ${dayObj.isActive ? 'border-orange-50 dark:border-slate-700 bg-[#FFFDFB]/40 dark:bg-slate-700/30' : 'border-slate-100 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-700/20 opacity-70'}`}>
                       <div className="flex items-center gap-4 w-40 flex-shrink-0">
                         <label className="relative inline-flex items-center cursor-pointer select-none">
                           <input type="checkbox" defaultChecked={dayObj.isActive} className="sr-only peer" />
-                          <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 peer-checked:bg-emerald-600"></div>
+                          <div className="w-8 h-4 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 peer-checked:bg-emerald-600"></div>
                         </label>
-                        <span className="text-xs font-bold text-slate-700">{dayObj.day}</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{dayObj.day}</span>
                       </div>
                       <div className="flex-1 flex items-center gap-3">
                         {dayObj.isActive ? (
                           <>
-                            <input type="text" defaultValue={dayObj.start} className="bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 px-3 py-1.5 w-24 text-center" />
+                            <input type="text" defaultValue={dayObj.start} className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-100 px-3 py-1.5 w-24 text-center" />
                             <span className="text-slate-400 text-[11px]">to</span>
-                            <input type="text" defaultValue={dayObj.end} className="bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 px-3 py-1.5 w-24 text-center" />
+                            <input type="text" defaultValue={dayObj.end} className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-100 px-3 py-1.5 w-24 text-center" />
                             <button className="p-1.5 text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                           </>
-                        ) : <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded">Day Off</span>}
+                        ) : <span className="text-[11px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded">Day Off</span>}
                       </div>
                     </div>
                   ))}

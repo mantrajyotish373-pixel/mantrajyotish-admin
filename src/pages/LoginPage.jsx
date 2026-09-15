@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ArrowRight, Sun, Moon } from 'lucide-react';
 
-export default function LoginPage() {
+export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const isDarkMode = true;
   const [username, setUsername] = useState('');
@@ -87,7 +87,9 @@ export default function LoginPage() {
           }
         }
         setIsLoading(false);
-        navigate('/dashboard');
+        if (onLogin) {
+          onLogin();
+        }
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
         setIsLoading(false);

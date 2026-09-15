@@ -26,7 +26,7 @@ const CustomReferenceLabel = (props) => {
   if (cx === undefined || cy === undefined) return null;
   
   return (
-    <g>
+    <g className="select-none">
       {/* Speech bubble shadow wrapper (simulated via SVG path) */}
       <path
         d={`M ${cx - 42} ${cy - 30} 
@@ -38,16 +38,16 @@ const CustomReferenceLabel = (props) => {
             a 6 6 0 0 0 -6 6 
             v 18 
             a 6 6 0 0 0 6 6 Z`}
-        fill="white"
-        stroke="#F1F5F9"
+        fill="var(--color-white)"
+        stroke="var(--color-slate-200)"
         strokeWidth="1"
-        style={{ filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.04))' }}
+        style={{ filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.15))' }}
       />
       {/* Text inside the callout bubble */}
       <text 
         x={cx} 
         y={cy - 32 + 16} 
-        fill="#1E293B" 
+        fill="var(--color-slate-800)" 
         fontSize="11px" 
         fontWeight="700" 
         textAnchor="middle"
@@ -59,8 +59,28 @@ const CustomReferenceLabel = (props) => {
   );
 };
 
-const RevenueChart = ({ chartData }) => {
+const RevenueChart = ({ chartData, isLoading }) => {
   const [filter, setFilter] = useState('Weekly');
+
+  if (isLoading && !chartData) {
+    return (
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm flex-1 min-w-[300px] select-none animate-pulse">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-6 w-36 bg-slate-200 dark:bg-slate-700 rounded-md" />
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded-full" />
+        </div>
+        <div className="w-full h-[280px] bg-slate-100 dark:bg-slate-700/50 rounded-xl flex items-end p-4 gap-4">
+          <div className="w-full h-1/3 bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-2/3 bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-full bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-1/2 bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-3/4 bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-4/5 bg-slate-200 dark:bg-slate-600/50 rounded" />
+          <div className="w-full h-2/5 bg-slate-200 dark:bg-slate-600/50 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   // Decide which dataset to use (Weekly, Daily, Monthly)
   const activeData = (chartData && chartData[filter] && chartData[filter].length > 0)
@@ -91,15 +111,15 @@ const RevenueChart = ({ chartData }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-orange-50/50 shadow-sm flex-1 min-w-[300px]">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm flex-1 min-w-[300px]">
       {/* Chart Header */}
       <div className="flex items-center justify-between mb-6 select-none">
-        <h3 className="text-lg font-bold text-slate-800" style={{ fontFamily: 'Outfit' }}>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>
           Revenue Analytics
         </h3>
         
         {/* Toggle Filters */}
-        <div className="flex items-center bg-[#FBF9F8] p-1 rounded-full border border-orange-50">
+        <div className="flex items-center bg-[#FBF9F8] dark:bg-slate-900 p-1 rounded-full border border-orange-50 dark:border-slate-700">
           {['Daily', 'Weekly', 'Monthly'].map((item) => (
             <button
               key={item}
@@ -107,7 +127,7 @@ const RevenueChart = ({ chartData }) => {
               className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
                 filter === item
                   ? 'bg-[#FA5A24] text-white shadow-sm'
-                  : 'text-slate-500 hover:text-[#FA5A24]'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-[#FA5A24] dark:hover:text-[#FA5A24]'
               }`}
             >
               {item}
@@ -133,7 +153,7 @@ const RevenueChart = ({ chartData }) => {
             <CartesianGrid 
               strokeDasharray="4 4" 
               vertical={false} 
-              stroke="#F1F5F9" 
+              stroke="var(--color-slate-200)" 
             />
 
             <XAxis 
@@ -157,12 +177,13 @@ const RevenueChart = ({ chartData }) => {
             <Tooltip 
               cursor={{ stroke: '#FFDCD0', strokeWidth: 1, strokeDasharray: '3 3' }}
               contentStyle={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #FFF1EC', 
+                backgroundColor: 'var(--color-white)', 
+                borderColor: 'var(--color-slate-200)', 
                 borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(250, 90, 36, 0.08)' 
+                color: 'var(--color-slate-800)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)' 
               }}
-              labelStyle={{ fontWeight: 'bold', color: '#64748B', fontSize: '11px' }}
+              labelStyle={{ fontWeight: 'bold', color: '#94A3B8', fontSize: '11px' }}
               itemStyle={{ color: '#FA5A24', fontSize: '12px', fontWeight: 'bold' }}
               formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']}
             />

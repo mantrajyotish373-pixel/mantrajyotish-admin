@@ -21,169 +21,49 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
-// Payments list mock data matching the screenshot
-const initialTransactions = [
-  {
-    id: '#TXN1250',
-    user: {
-      name: 'Rohit Sharma',
-      email: 'rohit@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'
-    },
-    service: 'Chat Session',
-    dateTime: {
-      date: '25 May 2025',
-      time: '10:30 AM'
-    },
-    method: 'Razorpay',
-    methodDetail: '**** 4587',
-    amount: '₹499',
-    status: 'Completed'
-  },
-  {
-    id: '#TXN1249',
-    user: {
-      name: 'Priya Singh',
-      email: 'priya.singh@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop'
-    },
-    service: 'Call Session',
-    dateTime: {
-      date: '25 May 2025',
-      time: '09:15 AM'
-    },
-    method: 'UPI',
-    methodDetail: 'priya@upi',
-    amount: '₹299',
-    status: 'Pending'
-  },
-  {
-    id: '#TXN1248',
-    user: {
-      name: 'Amit Kumar',
-      email: 'amit.kumar@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-    },
-    service: 'Video Call',
-    dateTime: {
-      date: '24 May 2025',
-      time: '07:45 PM'
-    },
-    method: 'Paytm',
-    methodDetail: '**** 9876',
-    amount: '₹599',
-    status: 'Completed'
-  },
-  {
-    id: '#TXN1247',
-    user: {
-      name: 'Sneha Patel',
-      email: 'sneha.patel@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'
-    },
-    service: 'Chat Session',
-    dateTime: {
-      date: '24 May 2025',
-      time: '06:20 PM'
-    },
-    method: 'Credit Card',
-    methodDetail: '**** 1122',
-    amount: '₹499',
-    status: 'Failed'
-  },
-  {
-    id: '#TXN1246',
-    user: {
-      name: 'Vikash Yadav',
-      email: 'vikash.yadav@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-    },
-    service: 'Call Session',
-    dateTime: {
-      date: '24 May 2025',
-      time: '04:10 PM'
-    },
-    method: 'UPI',
-    methodDetail: 'vikash@upi',
-    amount: '₹299',
-    status: 'Completed'
-  },
-  {
-    id: '#TXN1245',
-    user: {
-      name: 'Neha Joshi',
-      email: 'neha.joshi@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
-    },
-    service: 'Video Call',
-    dateTime: {
-      date: '23 May 2025',
-      time: '08:30 PM'
-    },
-    method: 'Razorpay',
-    methodDetail: '**** 4567',
-    amount: '₹799',
-    status: 'Completed'
-  }
-];
-
-// Refund request items list matching the sidebar recap
-const refundRequestsMock = [
-  { id: 1, user: 'Rohit Sharma', date: '25 May 2025, 11:30 AM', amount: '₹499', status: 'Pending', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' },
-  { id: 2, user: 'Priya Singh', date: '25 May 2025, 10:15 AM', amount: '₹299', status: 'Approved', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop' },
-  { id: 3, user: 'Amit Kumar', date: '24 May 2025, 07:50 PM', amount: '₹599', status: 'Rejected', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' }
-];
-
-// Payment summary donut chart data configuration
-const summaryData = [
-  { name: 'Completed', value: 310200, color: '#10B981' },
-  { name: 'Pending', value: 24800, color: '#F59E0B' },
-  { name: 'Refunded', value: 10600, color: '#3B82F6' },
-  { name: 'Failed', value: 3200, color: '#EF4444' }
-];
-
 const mapTransactions = (data) => {
   return data.map((item, idx) => {
     const u = item.user || {};
-    const firstName = u.firstname || '';
+    const firstName = u.firstname || u.name || '';
     const lastName = u.lastname || '';
-    const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous User';
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'User';
     
-    const mode = item.appointment?.consultationMode || 'Chat';
-    const serviceName = mode.charAt(0).toUpperCase() + mode.slice(1) + ' Session';
+    const mode = item.appointment?.consultationMode || item.service || 'Consultation';
+    const serviceName = mode.charAt(0).toUpperCase() + mode.slice(1);
     
     const dateRaw = item.createdAt ? new Date(item.createdAt) : new Date();
     const formattedDate = dateRaw.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const formattedTime = dateRaw.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    const method = item.paymentGateway || 'UPI';
-    const statusVal = item.paymentStatus === 'success' || item.paymentStatus === 'paid'
+    const method = item.paymentGateway || item.paymentMethod || item.method || 'UPI';
+    const statusVal = (item.paymentStatus || item.status || '').toLowerCase() === 'success' || (item.paymentStatus || item.status || '').toLowerCase() === 'paid' || (item.paymentStatus || item.status || '').toLowerCase() === 'completed'
       ? 'Completed' 
-      : (item.paymentStatus === 'failed' ? 'Failed' : 'Pending');
+      : ((item.paymentStatus || item.status || '').toLowerCase() === 'failed' ? 'Failed' : ((item.paymentStatus || item.status || '').toLowerCase() === 'refunded' ? 'Refunded' : 'Pending'));
 
     return {
-      id: item._id || ('#TXN' + idx),
+      id: item._id || item.id || ('#TXN' + (1000 + idx)),
       user: {
         name: fullName,
-        email: u.email || 'no-email@example.com',
-        avatar: u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'
+        email: u.email || 'N/A',
+        avatar: u.avatar || u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=FA5A24&color=fff`
       },
-      service: serviceName,
+      service: serviceName.includes('Session') ? serviceName : serviceName + ' Session',
       dateTime: {
         date: formattedDate,
         time: formattedTime
       },
       method: method,
-      methodDetail: item.transactionId ? 'ID: ' + item.transactionId : 'Live Order',
-      amount: '₹' + (item.amount || 0),
-      amountRaw: item.amount || 0,
+      methodDetail: item.transactionId ? 'ID: ' + item.transactionId : '',
+      amount: '₹' + (item.amount || item.totalAmount || 0),
+      amountRaw: Number(item.amount || item.totalAmount || 0),
       status: statusVal
     };
   });
 };
 
 const PaymentsPage = () => {
-  const [transactions, setTransactions] = useState(initialTransactions);
+  const [transactions, setTransactions] = useState([]);
+  const [refundRequests, setRefundRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('All Transactions');
   const [methodFilter, setMethodFilter] = useState('All');
@@ -197,8 +77,14 @@ const PaymentsPage = () => {
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
-    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`)
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+
+    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`, { headers })
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch payment transactions');
@@ -207,9 +93,12 @@ const PaymentsPage = () => {
       })
       .then(json => {
         if (json.success && Array.isArray(json.data)) {
-          setTransactions(mapTransactions(json.data));
+          const mapped = mapTransactions(json.data);
+          setTransactions(mapped);
+        } else if (Array.isArray(json)) {
+          setTransactions(mapTransactions(json));
         } else {
-          throw new Error('Invalid API response format');
+          setTransactions([]);
         }
         setIsLoading(false);
       })
@@ -217,7 +106,7 @@ const PaymentsPage = () => {
         console.error(err);
         setError(err.message);
         setIsLoading(false);
-        setTransactions(initialTransactions);
+        setTransactions([]);
       });
   }, []);
 
@@ -229,11 +118,17 @@ const PaymentsPage = () => {
   // Handle search bar ID lookup dynamically
   useEffect(() => {
     const trimmed = searchQuery.trim();
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+
     if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
       setIsLoading(true);
       setError(null);
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
-      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/${trimmed}`)
+      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/${trimmed}`, { headers })
         .then(res => {
           if (!res.ok) {
             throw new Error('Transaction ID not found');
@@ -250,18 +145,15 @@ const PaymentsPage = () => {
           console.warn('ID lookup failed, falling back to local search.', err.message);
           setIsLoading(false);
         });
-    } else if (trimmed === '') {
-      setIsLoading(true);
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
-      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`)
+    } else if (trimmed === '' && !isLoading) {
+      fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/payment/all`, { headers })
         .then(res => res.json())
         .then(json => {
           if (json.success && Array.isArray(json.data)) {
             setTransactions(mapTransactions(json.data));
           }
-          setIsLoading(false);
         })
-        .catch(() => setIsLoading(false));
+        .catch(() => {});
     }
   }, [searchQuery]);
 
@@ -314,12 +206,54 @@ const PaymentsPage = () => {
       else if (t.status === 'Failed') failed += amt;
     });
 
+    const total = completed + pending + refunded + failed || 1;
+
     return [
-      { name: 'Completed', value: completed, color: '#10B981' },
-      { name: 'Pending', value: pending, color: '#F59E0B' },
-      { name: 'Refunded', value: refunded, color: '#3B82F6' },
-      { name: 'Failed', value: failed, color: '#EF4444' }
+      { name: 'Completed', value: completed, color: '#10B981', formatted: '₹' + completed.toLocaleString('en-IN') },
+      { name: 'Pending', value: pending, color: '#F59E0B', formatted: '₹' + pending.toLocaleString('en-IN') },
+      { name: 'Refunded', value: refunded, color: '#3B82F6', formatted: '₹' + refunded.toLocaleString('en-IN') },
+      { name: 'Failed', value: failed, color: '#EF4444', formatted: '₹' + failed.toLocaleString('en-IN') }
     ];
+  }, [transactions]);
+
+  // Dynamic payment methods distribution
+  const dynamicPaymentMethods = useMemo(() => {
+    const counts = {};
+    const amounts = {};
+    let totalAmt = 0;
+
+    transactions.forEach(t => {
+      const m = t.method || 'UPI';
+      const amt = t.amountRaw || 0;
+      counts[m] = (counts[m] || 0) + 1;
+      amounts[m] = (amounts[m] || 0) + amt;
+      totalAmt += amt;
+    });
+
+    const colors = {
+      UPI: 'bg-emerald-500',
+      Razorpay: 'bg-indigo-500',
+      Paytm: 'bg-blue-500',
+      'Credit Card': 'bg-amber-500',
+      'Debit Card': 'bg-rose-500',
+      Netbanking: 'bg-purple-500'
+    };
+
+    const keys = Object.keys(amounts);
+    if (keys.length === 0) return [];
+
+    return keys.map(m => {
+      const amt = amounts[m] || 0;
+      const count = counts[m] || 0;
+      const pct = totalAmt > 0 ? Math.min(100, Math.max(5, Math.round((amt / totalAmt) * 100))) : 0;
+      return {
+        name: m,
+        count: `${count.toLocaleString('en-IN')} Transaction${count === 1 ? '' : 's'}`,
+        amount: `₹${amt.toLocaleString('en-IN')}`,
+        pct: `${pct}%`,
+        color: colors[m] || 'bg-slate-500'
+      };
+    });
   }, [transactions]);
 
   // Filters logic
@@ -348,34 +282,29 @@ const PaymentsPage = () => {
   const totalPages = Math.ceil(filteredTxns.length / itemsPerPage) || 1;
   const paginatedTxns = filteredTxns.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // Professional Pagination Buttons Generator (e.g. 1, 2, ..., 5, 6, ..., 9, 10)
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisible = 5;
-    if (totalPages <= maxVisible) {
+    if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1);
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
-
-      if (currentPage <= 2) {
-        end = 4;
-      } else if (currentPage >= totalPages - 1) {
-        start = totalPages - 3;
-      }
-
-      if (start > 2) {
+      if (currentPage > 3) {
         pages.push('...');
       }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
 
       for (let i = start; i <= end; i++) {
-        pages.push(i);
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
       }
 
-      if (end < totalPages - 1) {
+      if (currentPage < totalPages - 2) {
         pages.push('...');
       }
-
       pages.push(totalPages);
     }
     return pages;
@@ -406,12 +335,62 @@ const PaymentsPage = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 select-none pb-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-40 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+            <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-36 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+            <div className="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+          </div>
+        </div>
+
+        {/* 5 Cards Skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 p-4.5 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-2.5 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content & Filters Skeleton */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="h-10 w-64 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+            <div className="h-10 w-44 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-14 bg-slate-100 dark:bg-slate-700/40 rounded-xl w-full" />
+              ))}
+            </div>
+            <div className="space-y-4">
+              <div className="h-44 bg-slate-100 dark:bg-slate-700/40 rounded-2xl w-full" />
+              <div className="h-44 bg-slate-100 dark:bg-slate-700/40 rounded-2xl w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 select-none pb-8">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2" style={{ fontFamily: 'Outfit' }}>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2" style={{ fontFamily: 'Outfit' }}>
             Payments <span className="text-[#FA5A24]">✨</span>
           </h1>
           <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mt-1">
@@ -422,7 +401,7 @@ const PaymentsPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all">
+          <button className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all">
             <RotateCcw size={14} className="text-[#FA5A24]" />
             <span>Refund Requests</span>
           </button>
@@ -439,21 +418,21 @@ const PaymentsPage = () => {
       {/* 5 Stats Cards Row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Total Revenue', value: dynamicStats.totalRevenue, trend: '▲ 18.7%', isUp: true, color: 'text-orange-500 bg-orange-50/70', icon: IndianRupee },
-          { label: 'Completed Payments', value: dynamicStats.completedPayments, trend: '▲ 16.3%', isUp: true, color: 'text-emerald-500 bg-emerald-50/70', icon: Wallet },
-          { label: 'Pending Payments', value: dynamicStats.pendingPayments, trend: '▲ 8.6%', isUp: true, color: 'text-purple-500 bg-purple-50/70', icon: Clock },
-          { label: 'Refunded Amount', value: dynamicStats.refundedAmount, trend: '▼ 3.2%', isUp: false, color: 'text-blue-500 bg-blue-50/70', icon: RotateCcw },
-          { label: 'Total Transactions', value: dynamicStats.totalTxns, trend: '▲ 12.5%', isUp: true, color: 'text-amber-500 bg-amber-50/70', icon: CreditCard }
+          { label: 'Total Revenue', value: dynamicStats.totalRevenue, trend: '▲ 18.7%', isUp: true, color: 'text-orange-500 bg-orange-50/70 dark:bg-orange-950/40', icon: IndianRupee },
+          { label: 'Completed Payments', value: dynamicStats.completedPayments, trend: '▲ 16.3%', isUp: true, color: 'text-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40', icon: Wallet },
+          { label: 'Pending Payments', value: dynamicStats.pendingPayments, trend: '▲ 8.6%', isUp: true, color: 'text-purple-500 bg-purple-50/70 dark:bg-purple-950/40', icon: Clock },
+          { label: 'Refunded Amount', value: dynamicStats.refundedAmount, trend: '▼ 3.2%', isUp: false, color: 'text-blue-500 bg-blue-50/70 dark:bg-blue-950/40', icon: RotateCcw },
+          { label: 'Total Transactions', value: dynamicStats.totalTxns, trend: '▲ 12.5%', isUp: true, color: 'text-amber-500 bg-amber-50/70 dark:bg-amber-950/40', icon: CreditCard }
         ].map((item, idx) => (
-          <div key={idx} className="bg-white border border-slate-100/80 rounded-2xl p-4.5 shadow-sm flex items-center gap-3">
+          <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-100/80 dark:border-slate-700/60 rounded-2xl p-4.5 shadow-sm flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.color} flex-shrink-0`}>
               <item.icon size={18} />
             </div>
             <div className="min-w-0">
               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block truncate">{item.label}</span>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-base font-extrabold text-slate-800" style={{ fontFamily: 'Outfit' }}>{item.value}</span>
-                <span className={`text-[8px] font-bold ${item.isUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <span className="text-base font-extrabold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>{item.value}</span>
+                <span className={`text-[8px] font-bold ${item.isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {item.trend}
                 </span>
               </div>
@@ -463,7 +442,7 @@ const PaymentsPage = () => {
       </div>
 
       {/* Filter and Content Split Section */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
         {/* Filter Toolbar */}
         <div className="flex flex-col lg:flex-row items-center gap-3 justify-between">
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
@@ -475,16 +454,16 @@ const PaymentsPage = () => {
                 placeholder="Search by transaction ID, user, email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[#FCFAF8] border border-slate-200 text-xs rounded-xl outline-none focus:border-orange-200 focus:bg-white font-medium text-slate-700 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 bg-[#FCFAF8] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded-xl outline-none focus:border-orange-200 dark:focus:border-orange-500/50 font-medium text-slate-700 dark:text-slate-200 transition-all duration-200"
               />
             </div>
 
             {/* Date Picker mock */}
             <div className="relative w-full sm:w-48">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-              <select className="w-full pl-8 pr-4 py-2 bg-[#FCFAF8] border border-slate-200 text-xs text-slate-600 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow">
-                <option>01 May 2025 - 31 May 2025</option>
-                <option>Today</option>
+              <select className="w-full pl-8 pr-4 py-2 bg-[#FCFAF8] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow">
+                <option className="dark:bg-slate-900">01 May 2025 - 31 May 2025</option>
+                <option className="dark:bg-slate-900">Today</option>
               </select>
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
@@ -494,13 +473,13 @@ const PaymentsPage = () => {
               <select
                 value={methodFilter}
                 onChange={(e) => setMethodFilter(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 bg-[#FCFAF8] border border-slate-200 text-xs text-slate-600 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow"
+                className="w-full pl-3 pr-8 py-2 bg-[#FCFAF8] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow"
               >
-                <option value="All">All Payment Methods</option>
-                <option value="UPI">UPI</option>
-                <option value="Razorpay">Razorpay</option>
-                <option value="Paytm">Paytm</option>
-                <option value="Credit Card">Credit Card</option>
+                <option value="All" className="dark:bg-slate-900">All Payment Methods</option>
+                <option value="UPI" className="dark:bg-slate-900">UPI</option>
+                <option value="Razorpay" className="dark:bg-slate-900">Razorpay</option>
+                <option value="Paytm" className="dark:bg-slate-900">Paytm</option>
+                <option value="Credit Card" className="dark:bg-slate-900">Credit Card</option>
               </select>
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
@@ -510,12 +489,12 @@ const PaymentsPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-3 pr-8 py-2 bg-[#FCFAF8] border border-slate-200 text-xs text-slate-600 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow"
+                className="w-full pl-3 pr-8 py-2 bg-[#FCFAF8] dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 rounded-xl outline-none appearance-none font-bold select-dropdown-arrow"
               >
-                <option value="All">All Status</option>
-                <option value="Completed">Completed</option>
-                <option value="Pending">Pending</option>
-                <option value="Failed">Failed</option>
+                <option value="All" className="dark:bg-slate-900">All Status</option>
+                <option value="Completed" className="dark:bg-slate-900">Completed</option>
+                <option value="Pending" className="dark:bg-slate-900">Pending</option>
+                <option value="Failed" className="dark:bg-slate-900">Failed</option>
               </select>
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
@@ -528,7 +507,7 @@ const PaymentsPage = () => {
         </div>
 
         {/* Sub-tabs Options Row */}
-        <div className="flex items-center gap-6 border-b border-slate-100 pb-1.5 flex-shrink-0 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-6 border-b border-slate-100 dark:border-slate-700/60 pb-1.5 flex-shrink-0 overflow-x-auto scrollbar-none">
           {['All Transactions', 'Completed', 'Pending', 'Refunded', 'Failed'].map((tab) => {
             const isActive = activeSubTab === tab;
             return (
@@ -536,7 +515,7 @@ const PaymentsPage = () => {
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
                 className={`pb-1 text-xs font-bold border-b-2 transition-all outline-none whitespace-nowrap ${
-                  isActive ? 'border-[#FA5A24] text-[#FA5A24]' : 'border-transparent text-slate-400 hover:text-slate-600'
+                  isActive ? 'border-[#FA5A24] text-[#FA5A24]' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
                 {tab}
@@ -551,20 +530,20 @@ const PaymentsPage = () => {
           {/* Table Container Column */}
           <div className="xl:col-span-2 space-y-4">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[700px]">
+              <table className="w-full text-left border-collapse min-w-[750px]">
                 <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 text-[9px] font-extrabold uppercase tracking-wider">
-                    <th className="py-3 px-3">Transaction ID</th>
-                    <th className="py-3 px-3">User</th>
-                    <th className="py-3 px-3">Service</th>
-                    <th className="py-3 px-3">Date & Time</th>
-                    <th className="py-3 px-3">Payment Method</th>
-                    <th className="py-3 px-3">Amount</th>
-                    <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-3 text-center">Action</th>
+                  <tr className="border-b border-slate-100 dark:border-slate-700/60 text-slate-400 text-[9px] font-extrabold uppercase tracking-wider">
+                    <th className="py-3 px-3 w-40">Transaction ID</th>
+                    <th className="py-3 px-3 w-48">User</th>
+                    <th className="py-3 px-3 w-36">Service</th>
+                    <th className="py-3 px-3 w-28">Date & Time</th>
+                    <th className="py-3 px-3 min-w-[160px]">Payment Method</th>
+                    <th className="py-3 px-3 w-24">Amount</th>
+                    <th className="py-3 px-3 w-24">Status</th>
+                    <th className="py-3 px-3 w-16 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100/70 text-xs text-slate-700 font-semibold">
+                <tbody className="divide-y divide-slate-100/70 dark:divide-slate-700/60 text-xs text-slate-700 dark:text-slate-200 font-semibold">
                   {isLoading ? (
                     <tr>
                       <td colSpan="8" className="text-center py-8 text-slate-400 font-medium">
@@ -576,7 +555,7 @@ const PaymentsPage = () => {
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-8 text-amber-600 bg-amber-50/50 rounded-xl font-medium">
+                      <td colSpan="8" className="text-center py-8 text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/40 rounded-xl font-medium">
                         <div className="flex items-center justify-center gap-2">
                           <AlertCircle size={15} />
                           <span>Could not load live transactions ({error}). Showing offline cache.</span>
@@ -585,69 +564,74 @@ const PaymentsPage = () => {
                     </tr>
                   ) : paginatedTxns.length > 0 ? (
                     paginatedTxns.map((txn) => (
-                      <tr key={txn.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-3 font-bold text-slate-600 select-text">{txn.id}</td>
+                      <tr key={txn.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/40 transition-colors">
+                        {/* Transaction ID */}
+                        <td className="py-3.5 px-3 font-bold text-slate-600 dark:text-slate-300 select-text max-w-[150px] truncate" title={txn.id}>
+                          {txn.id}
+                        </td>
                         
                         {/* User Column */}
-                        <td className="py-4 px-3">
-                          <div className="flex items-center gap-2.5">
-                            <img src={txn.user.avatar} className="w-7 h-7 rounded-full object-cover shadow-sm border border-slate-100" alt="" />
-                            <div className="flex flex-col">
-                              <span className="font-extrabold text-slate-800 leading-tight">{txn.user.name}</span>
-                              <span className="text-[9px] text-slate-400 font-bold mt-0.5 select-text">{txn.user.email}</span>
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <img src={txn.user.avatar} className="w-7 h-7 rounded-full object-cover shadow-sm border border-slate-100 dark:border-slate-700 flex-shrink-0" alt="" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-extrabold text-slate-800 dark:text-slate-100 leading-tight truncate">{txn.user.name}</span>
+                              <span className="text-[9px] text-slate-400 font-bold mt-0.5 select-text truncate">{txn.user.email}</span>
                             </div>
                           </div>
                         </td>
 
                         {/* Service mode */}
-                        <td className="py-4 px-3">
+                        <td className="py-3.5 px-3">
                           <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded bg-slate-50 flex items-center justify-center flex-shrink-0">
+                            <span className="w-5 h-5 rounded bg-slate-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
                               {renderServiceIcon(txn.service)}
                             </span>
-                            <span className="text-slate-500 font-bold text-[11px]">{txn.service}</span>
+                            <span className="text-slate-500 dark:text-slate-300 font-bold text-[11px] truncate">{txn.service}</span>
                           </div>
                         </td>
 
                         {/* Date & Time */}
-                        <td className="py-4 px-3">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-800 leading-tight">{txn.dateTime.date}</span>
+                        <td className="py-3.5 px-3">
+                          <div className="flex flex-col whitespace-nowrap">
+                            <span className="font-bold text-slate-800 dark:text-slate-100 leading-tight">{txn.dateTime.date}</span>
                             <span className="text-[9px] text-slate-400 font-extrabold mt-0.5 uppercase">{txn.dateTime.time}</span>
                           </div>
                         </td>
 
                         {/* Payment Method */}
-                        <td className="py-4 px-3 text-slate-500 font-bold text-[11px]">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-4 h-4 bg-slate-100/80 rounded flex items-center justify-center text-[8px] font-extrabold border border-slate-200/50 text-[#FA5A24]">
+                        <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-bold text-[11px]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="w-4 h-4 bg-slate-100/80 dark:bg-slate-700 rounded flex items-center justify-center text-[8px] font-extrabold border border-slate-200/50 dark:border-slate-600 text-[#FA5A24] flex-shrink-0">
                               {txn.method.charAt(0)}
                             </span>
-                            <span>{txn.method} {txn.methodDetail}</span>
+                            <span className="truncate" title={`${txn.method} ${txn.methodDetail}`}>
+                              {txn.method} {txn.methodDetail}
+                            </span>
                           </div>
                         </td>
 
                         {/* Amount */}
-                        <td className="py-4 px-3 font-extrabold text-slate-850">{txn.amount}</td>
+                        <td className="py-3.5 px-3 font-extrabold text-slate-800 dark:text-slate-100 whitespace-nowrap">{txn.amount}</td>
 
                         {/* Status badges */}
-                        <td className="py-4 px-3">
+                        <td className="py-3.5 px-3 whitespace-nowrap">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-wider ${
                             txn.status === 'Completed'
-                              ? 'bg-[#E6F4EA] text-[#137333]'
+                              ? 'bg-[#E6F4EA] dark:bg-emerald-950/50 text-[#137333] dark:text-emerald-400'
                               : txn.status === 'Pending'
-                              ? 'bg-[#FEF3C7] text-[#D97706]'
-                              : 'bg-red-50 text-red-600'
+                              ? 'bg-[#FEF3C7] dark:bg-amber-950/50 text-[#D97706] dark:text-amber-400'
+                              : 'bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400'
                           }`}>
                             {txn.status}
                           </span>
                         </td>
 
                         {/* Actions view */}
-                        <td className="py-4 px-3 text-center">
+                        <td className="py-3.5 px-3 text-center">
                           <button 
                             onClick={() => setSelectedTxn(txn)}
-                            className="p-1.5 border border-slate-200 hover:bg-[#FA5A24]/5 hover:border-[#FA5A24]/30 text-slate-400 hover:text-[#FA5A24] rounded-lg transition-all"
+                            className="p-1.5 border border-slate-200 dark:border-slate-700 hover:bg-[#FA5A24]/5 dark:hover:bg-slate-700 hover:border-[#FA5A24]/30 text-slate-400 hover:text-[#FA5A24] dark:hover:text-[#FA5A24] rounded-lg transition-all cursor-pointer"
                           >
                             <Eye size={11} />
                           </button>
@@ -667,7 +651,7 @@ const PaymentsPage = () => {
             </div>
 
             {/* Table pagination stats footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700/60">
               <span className="text-[10px] text-slate-400 font-bold">
                 Showing {filteredTxns.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredTxns.length)} of {filteredTxns.length} entries
               </span>
@@ -675,7 +659,7 @@ const PaymentsPage = () => {
                 <button 
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-2 py-1 border border-slate-200 rounded-lg text-slate-400 text-[10px] font-extrabold hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  className="px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-extrabold disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
                   &lt;
                 </button>
@@ -691,7 +675,7 @@ const PaymentsPage = () => {
                       className={`px-3 py-1 text-[10px] font-extrabold rounded-lg cursor-pointer transition-all ${
                         isActive 
                           ? 'bg-[#FA5A24] text-white shadow-sm' 
-                          : 'border border-slate-200 text-slate-505 hover:bg-orange-50/50 hover:text-[#FA5A24]'
+                          : 'border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-orange-50/50 dark:hover:bg-slate-700 hover:text-[#FA5A24] dark:hover:text-[#FA5A24]'
                       }`}
                     >
                       {p}
@@ -701,7 +685,7 @@ const PaymentsPage = () => {
                 <button 
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-2 py-1 border border-slate-200 rounded-lg text-slate-400 text-[10px] font-extrabold hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  className="px-2 py-1 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-[10px] font-extrabold disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
                   &gt;
                 </button>
@@ -713,14 +697,14 @@ const PaymentsPage = () => {
           <div className="space-y-6">
             
             {/* Widget 1: Payment Summary Donut Chart */}
-            <div className="bg-[#FCFAF8] border border-slate-100 rounded-2xl p-5 shadow-sm">
-              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-4">Payment Summary</h4>
+            <div className="bg-[#FCFAF8] dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
+              <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-4">Payment Summary</h4>
               <div className="flex items-center gap-5 justify-between">
                 <div className="w-28 h-28 flex-shrink-0 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={summaryData}
+                        data={dynamicSummaryData}
                         cx="50%"
                         cy="50%"
                         innerRadius={36}
@@ -728,33 +712,30 @@ const PaymentsPage = () => {
                         paddingAngle={3}
                         dataKey="value"
                       >
-                        {summaryData.map((entry, index) => (
+                        {dynamicSummaryData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                   {/* Central Text inside donut */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase leading-none block">Total</span>
-                    <span className="text-[11px] font-extrabold text-slate-800 mt-0.5 leading-none block" style={{ fontFamily: 'Outfit' }}>₹3.45L</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase leading-none block">Total</span>
+                    <span className="text-[11px] font-extrabold text-slate-800 dark:text-slate-100 mt-0.5 leading-none block truncate w-full" style={{ fontFamily: 'Outfit' }}>
+                      {dynamicStats.totalRevenue}
+                    </span>
                   </div>
                 </div>
 
                 {/* Donut Legend lists */}
                 <div className="flex-1 space-y-2 text-[10px] font-bold">
-                  {[
-                    { label: 'Completed', value: '₹3,10,200', color: 'bg-[#10B981]' },
-                    { label: 'Pending', value: '₹24,800', color: 'bg-[#F59E0B]' },
-                    { label: 'Refunded', value: '₹10,600', color: 'bg-[#3B82F6]' },
-                    { label: 'Failed', value: '₹3,200', color: 'bg-[#EF4444]' }
-                  ].map((legend, idx) => (
+                  {dynamicSummaryData.map((legend, idx) => (
                     <div key={idx} className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className={`w-2 h-2 rounded-full ${legend.color} flex-shrink-0`}></span>
-                        <span className="text-slate-400 truncate">{legend.label}</span>
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: legend.color }}></span>
+                        <span className="text-slate-400 truncate">{legend.name}</span>
                       </div>
-                      <span className="text-slate-700">{legend.value}</span>
+                      <span className="text-slate-700 dark:text-slate-200">{legend.formatted}</span>
                     </div>
                   ))}
                 </div>
@@ -762,64 +743,70 @@ const PaymentsPage = () => {
             </div>
 
             {/* Widget 2: Payment Methods list */}
-            <div className="bg-[#FCFAF8] border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Payment Methods</h4>
+            <div className="bg-[#FCFAF8] dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
+              <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Payment Methods</h4>
               <div className="space-y-3.5">
-                {[
-                  { name: 'UPI', count: '1,250 Transactions', amount: '₹1,45,600', color: 'bg-emerald-500' },
-                  { name: 'Razorpay', count: '850 Transactions', amount: '₹1,10,400', color: 'bg-indigo-500' },
-                  { name: 'Paytm', count: '200 Transactions', amount: '₹45,200', color: 'bg-blue-500' },
-                  { name: 'Credit Card', count: '100 Transactions', amount: '₹30,400', color: 'bg-amber-500' },
-                  { name: 'Other Wallets', count: '50 Transactions', amount: '₹14,000', color: 'bg-slate-500' }
-                ].map((item, idx) => (
-                  <div key={idx} className="space-y-1.5 text-[10px] font-bold">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 bg-slate-200/50 rounded flex items-center justify-center text-[7px] text-slate-500">{item.name.charAt(0)}</span>
-                        <div>
-                          <span className="text-slate-700 block leading-none">{item.name}</span>
-                          <span className="text-[8px] text-slate-400 font-semibold block mt-0.5 leading-none">{item.count}</span>
+                {dynamicPaymentMethods.length > 0 ? (
+                  dynamicPaymentMethods.map((item, idx) => (
+                    <div key={idx} className="space-y-1.5 text-[10px] font-bold">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3.5 h-3.5 bg-slate-200/50 dark:bg-slate-700 rounded flex items-center justify-center text-[7px] text-slate-500 dark:text-slate-300">{item.name.charAt(0)}</span>
+                          <div>
+                            <span className="text-slate-700 dark:text-slate-200 block leading-none">{item.name}</span>
+                            <span className="text-[8px] text-slate-400 font-semibold block mt-0.5 leading-none">{item.count}</span>
+                          </div>
                         </div>
+                        <span className="text-slate-800 dark:text-slate-100">{item.amount}</span>
                       </div>
-                      <span className="text-slate-800">{item.amount}</span>
+                      {/* Visual Progress Bar matching the shares */}
+                      <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.color}`} style={{ width: item.pct }}></div>
+                      </div>
                     </div>
-                    {/* Visual Progress Bar matching the shares */}
-                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <div className={`h-full ${item.color}`} style={{ width: idx === 0 ? '60%' : idx === 1 ? '45%' : idx === 2 ? '20%' : '10%' }}></div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-slate-400 text-[10px] font-semibold">
+                    No payment method data available
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
             {/* Widget 3: Recent Refund Requests */}
-            <div className="bg-[#FCFAF8] border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="bg-[#FCFAF8] dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Recent Refund Requests</h4>
+                <h4 className="text-xs font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Recent Refund Requests</h4>
                 <button className="text-[9px] font-extrabold text-[#FA5A24] hover:underline flex items-center">View All <ChevronRight size={10} /></button>
               </div>
               <div className="divide-y divide-slate-100/60">
-                {refundRequestsMock.map((refund) => (
-                  <div key={refund.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between text-[10px] font-bold">
-                    <div className="flex items-center gap-2">
-                      <img src={refund.avatar} className="w-7 h-7 rounded-full object-cover border border-slate-100" alt="" />
-                      <div>
-                        <span className="text-slate-700 block leading-none">{refund.user}</span>
-                        <span className="text-[8px] text-slate-400 font-semibold block mt-0.5 leading-none">{refund.date}</span>
+                {refundRequests && refundRequests.length > 0 ? (
+                  refundRequests.map((refund) => (
+                    <div key={refund.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between text-[10px] font-bold">
+                      <div className="flex items-center gap-2">
+                        <img src={refund.avatar} className="w-7 h-7 rounded-full object-cover border border-slate-100" alt="" />
+                        <div>
+                          <span className="text-slate-700 dark:text-slate-200 block leading-none">{refund.user}</span>
+                          <span className="text-[8px] text-slate-400 font-semibold block mt-0.5 leading-none">{refund.date}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-800 dark:text-slate-100 block leading-none">{refund.amount}</span>
+                        <span className={`inline-block text-[8px] mt-0.5 leading-none ${
+                          refund.status === 'Pending'
+                            ? 'text-amber-500'
+                            : refund.status === 'Approved'
+                            ? 'text-emerald-500'
+                            : 'text-rose-500'
+                        }`}>{refund.status}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-slate-800 block leading-none">{refund.amount}</span>
-                      <span className={`inline-block text-[8px] mt-0.5 leading-none ${
-                        refund.status === 'Pending'
-                          ? 'text-amber-500'
-                          : refund.status === 'Approved'
-                          ? 'text-emerald-500'
-                          : 'text-rose-500'
-                      }`}>{refund.status}</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-slate-400 text-[10px] font-semibold">
+                    No pending refund requests
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
