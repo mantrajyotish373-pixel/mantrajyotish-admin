@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { can } from '../config/authSession';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { 
@@ -1141,7 +1142,8 @@ const AstrologersPage = () => {
                               <Video size={11} />
                               <span>{status.status === 'scheduled' ? 'Manage' : 'Interview'}</span>
                             </button>
-                            <button
+                            {can('astrologers.approve') && (
+<button
                               onClick={() => handleApprovePending(astro.id)}
                               className="px-2.5 py-1 bg-[#137333] hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
                               title="Approve Astrologer"
@@ -1149,13 +1151,16 @@ const AstrologersPage = () => {
                               <Check size={12} />
                               <span>Approve</span>
                             </button>
-                            <button
+)}
+                            {can('astrologers.approve') && (
+<button
                               onClick={() => handleRejectPending(astro.id)}
                               className="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
                               title="Reject Application"
                             >
                               <X size={14} />
                             </button>
+)}
                           </div>
                         </td>
                       </tr>
@@ -2251,20 +2256,24 @@ const AstrologersPage = () => {
                     <div className="flex flex-col gap-2.5 text-xs font-bold text-left">
                       {!selectedAstro.isVerified ? (
                         <>
-                          <button 
+                          {can('astrologers.approve') && (
+<button 
                             onClick={() => handleVerifyStatusChange(selectedAstro, 'approved')} 
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 justify-start transition-colors cursor-pointer"
                           >
                             <CheckCircle size={14} />
                             <span>Approve & Verify</span>
                           </button>
-                          <button 
+)}
+                          {can('astrologers.approve') && (
+<button 
                             onClick={() => handleVerifyStatusChange(selectedAstro, 'rejected')} 
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-rose-100 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 justify-start transition-colors cursor-pointer"
                           >
                             <X size={14} className="stroke-[2.5]" />
                             <span>Reject Profile</span>
                           </button>
+)}
                         </>
                       ) : (
                         <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 justify-center">
@@ -2284,7 +2293,9 @@ const AstrologersPage = () => {
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><User size={14} className="text-slate-400" /><span>View Profile (User View)</span></button>
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><MessageSquare size={14} className="text-slate-400" /><span>Chat History</span></button>
                       <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 justify-start transition-colors cursor-pointer"><Phone size={14} className="text-slate-400" /><span>Call History</span></button>
-                      <button onClick={() => handleDeleteAstrologer(selectedAstro.id)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 dark:border-rose-900/50 hover:bg-red-50 dark:hover:bg-rose-950/50 text-red-500 dark:text-rose-400 justify-start mt-2 transition-colors cursor-pointer"><X size={14} className="stroke-[3]" /><span>Delete Astrologer Profile</span></button>
+                      {can('astrologers.delete') && (
+<button onClick={() => handleDeleteAstrologer(selectedAstro.id)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-50 dark:border-rose-900/50 hover:bg-red-50 dark:hover:bg-rose-950/50 text-red-500 dark:text-rose-400 justify-start mt-2 transition-colors cursor-pointer"><X size={14} className="stroke-[3]" /><span>Delete Astrologer Profile</span></button>
+)}
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { can, isSuperAdmin } from '../config/authSession';
+import { permissionForPath } from '../config/permissionMap';
 import { 
   UserPlus, 
   Users, 
@@ -115,7 +117,7 @@ const QuickActions = ({ isLoading }) => {
 
       {/* Grid */}
       <div className="grid grid-cols-3 gap-3.5 flex-1">
-        {actions.map((act, index) => {
+        {actions.filter((act) => { const p = permissionForPath(act.path); return !p || (p === 'SUPERADMIN' ? isSuperAdmin() : can(p)); }).map((act, index) => {
           const IconComp = act.icon;
           return (
             <button

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { can } from '../config/authSession';
 import { 
   ShieldAlert, 
   Clock, 
@@ -408,18 +409,22 @@ const KycVerificationPage = () => {
                           <div className="flex items-center justify-center gap-1.5">
                             {app.status === 'Pending' ? (
                               <>
-                                <button 
+                                {can('astrologers.approve') && (
+<button 
                                   onClick={() => handleApprove(app.id)}
                                   className="p-1 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-md transition-colors"
                                 >
                                   <Check size={11} />
                                 </button>
-                                <button 
+)}
+                                {can('astrologers.approve') && (
+<button 
                                   onClick={() => handleReject(app.id)}
                                   className="p-1 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-900/50 text-rose-500 dark:text-rose-400 rounded-md transition-colors"
                                 >
                                   <X size={11} />
                                 </button>
+)}
                               </>
                             ) : (
                               <span className="text-slate-300 dark:text-slate-600 font-bold">—</span>
@@ -556,7 +561,8 @@ const KycVerificationPage = () => {
             {/* Sticky Actions */}
             <div className="p-4 bg-slate-50/50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700/60 flex-shrink-0 space-y-2">
               <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                <button 
+                {can('astrologers.approve') && (
+<button 
                   onClick={() => handleApprove(selectedApp.id)}
                   disabled={selectedApp.status === 'Approved'}
                   className="flex items-center justify-center gap-1.5 py-2.5 bg-white dark:bg-slate-700 border border-emerald-500 hover:bg-emerald-50/20 text-emerald-600 dark:text-emerald-400 rounded-xl disabled:opacity-55 disabled:cursor-not-allowed transition-all cursor-pointer"
@@ -564,7 +570,9 @@ const KycVerificationPage = () => {
                   <Check size={12} />
                   <span>Approve</span>
                 </button>
-                <button 
+)}
+                {can('astrologers.approve') && (
+<button 
                   onClick={() => handleReject(selectedApp.id)}
                   disabled={selectedApp.status === 'Rejected'}
                   className="flex items-center justify-center gap-1.5 py-2.5 bg-white dark:bg-slate-700 border border-rose-500 hover:bg-rose-50/20 text-rose-500 dark:text-rose-400 rounded-xl disabled:opacity-55 disabled:cursor-not-allowed transition-all cursor-pointer"
@@ -572,6 +580,7 @@ const KycVerificationPage = () => {
                   <X size={12} />
                   <span>Reject</span>
                 </button>
+)}
               </div>
 
               <button className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-[#FA5A24]/40 hover:bg-[#FA5A24]/5 text-[#FA5A24] bg-white dark:bg-slate-700 rounded-xl text-[10px] font-bold transition-all cursor-pointer">

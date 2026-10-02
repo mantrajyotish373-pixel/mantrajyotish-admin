@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { can } from '../config/authSession';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { 
@@ -484,7 +485,8 @@ export default function InterviewsPage() {
                                 <Calendar size={13} />
                                 <span>Schedule</span>
                               </button>
-                              <button
+                              {can('interviews.manage') && (
+<button
                                 onClick={() => handleQuickApprove(item)}
                                 className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer shadow-sm active:scale-95"
                                 title="Approve directly without interview"
@@ -492,7 +494,9 @@ export default function InterviewsPage() {
                                 <ShieldCheck size={10} />
                                 Approve
                               </button>
-                              <button
+)}
+                              {can('interviews.manage') && (
+<button
                                 onClick={() => handleQuickBlock(item)}
                                 className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer shadow-sm active:scale-95"
                                 title="Block/Reject astrologer"
@@ -500,6 +504,7 @@ export default function InterviewsPage() {
                                 <ShieldX size={10} />
                                 Block
                               </button>
+)}
                             </>
                           )}
 

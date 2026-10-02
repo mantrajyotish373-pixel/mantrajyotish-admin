@@ -17,7 +17,7 @@ export default function ViewProfilePage() {
   const user = userStr ? JSON.parse(userStr) : null;
   const profileData = {
     fullName: user && user.firstname ? user.firstname + (user.lastname ? ' ' + user.lastname : '') : 'Admin',
-    role: user && user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Admin' : 'Super Admin',
+    role: user && (user.roleName || user.role) ? (user.roleName || (user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Admin')) : 'Admin',
     email: user && user.email ? user.email : 'admin@astroadmin.com',
     phone: user && user.phone ? user.phone : '+91 98765 43210',
     location: 'Jaipur, Rajasthan, India',

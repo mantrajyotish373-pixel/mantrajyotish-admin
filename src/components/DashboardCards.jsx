@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { can } from '../config/authSession';
 import { 
   Users, 
   UserCheck, 
@@ -119,7 +120,7 @@ const DashboardCards = ({ data, isLoading }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 select-none">
-      {cardsData.map((card, idx) => {
+      {cardsData.filter((card) => card.title !== "Today's Revenue" || can('dashboard.financials')).map((card, idx) => {
         const IconComponent = card.icon;
         return (
           <div 

@@ -45,7 +45,7 @@ const Header = ({ toggleSidebar, theme, setTheme }) => {
         userEmail = user.email;
       }
       if (user.role) {
-        displayRole = user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Admin';
+        displayRole = user.roleName || (user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Admin');
       }
       if (user.profileImage || user.avatar || user.image) {
         avatarUrl = user.profileImage || user.avatar || user.image;

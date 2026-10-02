@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import { hasSession, clearSession, getAccessToken, refreshAccessToken, apiBase, SESSION_EXPIRED_EVENT } from './config/authSession';
+import { hasSession, clearSession, getAccessToken, refreshAccessToken, refreshProfile, can, isSuperAdmin, PROFILE_UPDATED_EVENT, SESSION_EXPIRED_EVENT } from './config/authSession';
+import { ROUTE_PERMISSIONS, permissionForPath } from './config/permissionMap';
 import Header from './components/Header';
 import DashboardCards from './components/DashboardCards';
 import RevenueChart from './components/RevenueChart';
@@ -21,6 +22,9 @@ import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import LogoutModal from './components/LogoutModal';
 import LoginPage from './pages/LoginPage';
+import TeamPage from './pages/TeamPage';
+import RolesPage from './pages/RolesPage';
+import AuditLogPage from './pages/AuditLogPage';
 import EditProfilePage from './pages/EditProfilePage';
 import ViewProfilePage from './pages/ViewProfilePage';
 import InterviewsPage from './pages/InterviewsPage';
@@ -98,14 +102,30 @@ function App() {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);
 
-  // Verify the session with the server on load; a revoked/deleted admin is logged out immediately.
+  // Verify the session on load and keep permissions fresh (on focus and every 5 min) so
+  // changes made by the super admin apply without logging out. A revoked admin is logged out.
+  const [, setProfileVersion] = useState(0);
+  useEffect(() => {
+    const rerender = () => setProfileVersion((n) => n + 1);
+    window.addEventListener(PROFILE_UPDATED_EVENT, rerender);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, rerender);
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) return;
     (async () => {
       if (!getAccessToken()) await refreshAccessToken();
-      try { await fetch(`${apiBase}/api/admin/profile`); } catch { /* offline: keep session */ }
+      await refreshProfile();
     })();
+    const onFocus = () => refreshProfile();
+    window.addEventListener('focus', onFocus);
+    const id = setInterval(refreshProfile, 5 * 60 * 1000);
+    return () => { window.removeEventListener('focus', onFocus); clearInterval(id); };
   }, [isAuthenticated]);
+
+  const allowedFor = (perm) => !perm || (perm === 'SUPERADMIN' ? isSuperAdmin() : can(perm));
+  const LANDING_ORDER = ['/dashboard', '/users', '/astrologers/all', '/kyc-verification', '/interviews', '/bookings', '/chats', '/calls', '/payments', '/withdraw-requests', '/reports', '/reviews', '/notifications', '/coupons', '/banner-management', '/team'];
+  const landingPath = LANDING_ORDER.find((p) => allowedFor(permissionForPath(p))) || '/settings';
 
   const location = useLocation();
   const currentPath = location.pathname;
@@ -152,6 +172,12 @@ function App() {
     activeTab = 'Settings';
   } else if (currentPath.startsWith('/view-profile')) {
     activeTab = 'Settings';
+  } else if (currentPath.startsWith('/team')) {
+    activeTab = 'Team';
+  } else if (currentPath.startsWith('/roles')) {
+    activeTab = 'Roles';
+  } else if (currentPath.startsWith('/audit-log')) {
+    activeTab = 'Audit Log';
   } else if (currentPath.startsWith('/logout')) {
     activeTab = 'Logout';
   }
@@ -161,7 +187,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && activeTab === 'Dashboard') {
+    if (isAuthenticated && activeTab === 'Dashboard' && can('dashboard.view')) {
       fetchDashboardStats(true);
       // Auto-refresh Dashboard metrics silently every 60 seconds
       const intervalId = setInterval(() => {
@@ -207,10 +233,12 @@ function App() {
 
       {/* Analytics Chart & Quick Actions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 flex flex-col">
-          <RevenueChart chartData={dashboardStats?.revenueChart} isLoading={statsLoading} />
-        </div>
-        <div className="lg:col-span-1 flex flex-col">
+        {can('dashboard.financials') && (
+          <div className="lg:col-span-2 flex flex-col">
+            <RevenueChart chartData={dashboardStats?.revenueChart} isLoading={statsLoading} />
+          </div>
+        )}
+        <div className={`${can('dashboard.financials') ? 'lg:col-span-1' : 'lg:col-span-3'} flex flex-col`}>
           <QuickActions isLoading={statsLoading} />
         </div>
       </div>
@@ -226,7 +254,7 @@ function App() {
         path="/login" 
         element={
           isAuthenticated ? (
-            <Navigate to="/dashboard" replace />
+            <Navigate to={landingPath} replace />
           ) : (
             <LoginPage onLogin={() => setIsAuthenticated(true)} />
           )
@@ -263,9 +291,17 @@ function App() {
 
                 {/* Dashboard/Users/Astrologers routing content panel */}
                 <main className={mainClass}>
+                  {!allowedFor(permissionForPath(currentPath)) ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center gap-3 p-8">
+                      <div className="text-5xl">🔒</div>
+                      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>No access to this section</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">Your role does not include permission for this page. Ask the super admin if you need it.</p>
+                      <a href={landingPath} className="mt-2 px-4 py-2 rounded-xl bg-[#FA5A24] text-white text-sm font-bold">Go to my home page</a>
+                    </div>
+                  ) : (
                   <Routes>
                     {/* Core pages */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/" element={<Navigate to={landingPath} replace />} />
                     <Route path="/dashboard" element={<DashboardView />} />
                     <Route path="/users" element={<UsersPage />} />
                     <Route path="/bookings" element={<BookingsPage />} />
@@ -292,6 +328,9 @@ function App() {
                         <p className="text-sm text-slate-400 dark:text-slate-400 max-w-sm mx-auto">This notifications center is currently under development.</p>
                       </div>
                     } />
+                    <Route path="/team" element={<TeamPage />} />
+                    <Route path="/roles" element={<RolesPage />} />
+                    <Route path="/audit-log" element={<AuditLogPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/edit-profile" element={<EditProfilePage />} />
                     <Route path="/view-profile" element={<ViewProfilePage />} />
@@ -306,8 +345,9 @@ function App() {
                     />
 
                     {/* Catch-all fallback redirect */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to={landingPath} replace />} />
                   </Routes>
+                  )}
                 </main>
               </div>
             </div>

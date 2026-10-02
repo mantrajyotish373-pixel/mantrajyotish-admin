@@ -17,6 +17,21 @@ export const saveSession = ({ token, refreshToken, admin }) => {
   write(K.flag, "true");
 };
 
+export const PROFILE_UPDATED_EVENT = "admin-profile-updated";
+
+export const getAdmin = () => {
+  try { return JSON.parse(read(K.user) || "null"); } catch { return null; }
+};
+export const isSuperAdmin = () => getAdmin()?.role === "superadmin";
+// Superadmin has every permission; sub-admins only what was granted. The server enforces this too.
+export const can = (perm) => {
+  const a = getAdmin();
+  if (!a) return false;
+  if (a.role === "superadmin") return true;
+  return Array.isArray(a.permissions) && a.permissions.includes(perm);
+};
+export const canAny = (perms) => perms.some(can);
+
 export const clearSession = () => {
   [K.access, K.refresh, K.user, K.flag, "token"].forEach(drop);
 };
@@ -95,3 +110,16 @@ export const installAuthFetch = () => {
 };
 
 export const apiBase = BASE;
+
+// Re-reads the admin (incl. permissions) from the server so permission edits apply without re-login.
+export const refreshProfile = async () => {
+  try {
+    const res = await window.fetch(`${BASE}/api/admin/profile`);
+    if (!res.ok) return;
+    const json = await res.json();
+    if (json.success && json.data) {
+      write(K.user, JSON.stringify(json.data));
+      window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
+    }
+  } catch { /* offline: keep what we have */ }
+};

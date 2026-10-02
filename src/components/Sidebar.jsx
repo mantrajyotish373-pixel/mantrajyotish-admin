@@ -17,8 +17,12 @@ import {
   ChevronLeft,
   UserPlus,
   Bell,
-  Star
+  Star,
+  Shield,
+  KeyRound,
+  ScrollText
 } from 'lucide-react';
+import { can, isSuperAdmin } from '../config/authSession';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -28,6 +32,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
+    if (!can('astrologers.view')) return;
     const token = localStorage.getItem('authToken');
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/pending`, {
@@ -84,6 +89,12 @@ const Sidebar = () => {
     activeTab = 'Notifications';
   } else if (currentPath.startsWith('/settings')) {
     activeTab = 'Settings';
+  } else if (currentPath.startsWith('/team')) {
+    activeTab = 'Team';
+  } else if (currentPath.startsWith('/roles')) {
+    activeTab = 'Roles';
+  } else if (currentPath.startsWith('/audit-log')) {
+    activeTab = 'Audit Log';
   } else if (currentPath.startsWith('/logout')) {
     activeTab = 'Logout';
   }
@@ -92,18 +103,19 @@ const Sidebar = () => {
     {
       title: 'MAIN',
       items: [
-        { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' }
+        { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', perm: 'dashboard.view' }
       ]
     },
     {
       title: 'ADMIN PANEL',
       items: [
-        { id: 'Users', label: 'Users', icon: Users, path: '/users' },
+        { id: 'Users', label: 'Users', icon: Users, path: '/users', perm: 'users.view' },
         { 
           id: 'Astrologers', 
           label: 'Astrologers', 
           icon: UserCheck,
           path: '/astrologers/all',
+          perm: 'astrologers.view',
           hasSubmenu: true,
           subItems: [
             { id: 'All Astrologers', label: 'All Astrologers', path: '/astrologers/all' },
@@ -112,15 +124,24 @@ const Sidebar = () => {
             { id: 'Blocked Astrologers', label: 'Blocked Astrologers', path: '/astrologers/blocked' }
           ]
         },
-        { id: 'Add New Astrologer', label: 'Add New Astrologer', icon: UserPlus, path: '/astrologers/add' },
-        { id: 'KYC Verification', label: 'KYC Verification', icon: ShieldCheck, path: '/kyc-verification' },
-        { id: 'Interviews', label: 'Interviews', icon: Calendar, path: '/interviews' },
-        { id: 'Appointments', label: 'Appointments', icon: Calendar, path: '/bookings' },
-        { id: 'Payments', label: 'Payments', icon: IndianRupee, path: '/payments' },
-        { id: 'Reports', label: 'Reports', icon: BarChart3, path: '/reports' },
-        { id: 'Reviews', label: 'Reviews', icon: Star, path: '/reviews' },
-        { id: 'Coupons', label: 'Coupons', icon: Ticket, path: '/coupons' },
-        { id: 'Notifications', label: 'Notifications', icon: Bell, path: '/notifications' }
+        { id: 'Add New Astrologer', label: 'Add New Astrologer', icon: UserPlus, path: '/astrologers/add', perm: 'astrologers.edit' },
+        { id: 'KYC Verification', label: 'KYC Verification', icon: ShieldCheck, path: '/kyc-verification', perm: 'kyc.view' },
+        { id: 'Interviews', label: 'Interviews', icon: Calendar, path: '/interviews', perm: 'interviews.view' },
+        { id: 'Appointments', label: 'Appointments', icon: Calendar, path: '/bookings', perm: 'bookings.view' },
+        { id: 'Payments', label: 'Payments', icon: IndianRupee, path: '/payments', perm: 'payments.view' },
+        { id: 'Reports', label: 'Reports', icon: BarChart3, path: '/reports', perm: 'reports.view' },
+        { id: 'Reviews', label: 'Reviews', icon: Star, path: '/reviews', perm: 'reviews.view' },
+        { id: 'Coupons', label: 'Coupons', icon: Ticket, path: '/coupons', perm: 'coupons.manage' },
+        { id: 'Notifications', label: 'Notifications', icon: Bell, path: '/notifications', perm: 'notifications.view' }
+      ]
+    },
+    {
+      title: 'TEAM & SECURITY',
+      superOnly: true,
+      items: [
+        { id: 'Team', label: 'Team Members', icon: Shield, path: '/team' },
+        { id: 'Roles', label: 'Roles & Permissions', icon: KeyRound, path: '/roles' },
+        { id: 'Audit Log', label: 'Audit Log', icon: ScrollText, path: '/audit-log' }
       ]
     },
     {
@@ -130,7 +151,10 @@ const Sidebar = () => {
         { id: 'Logout', label: 'Logout', icon: LogOut, path: '/logout' }
       ]
     }
-  ];
+  ]
+    .filter((g) => !g.superOnly || isSuperAdmin())
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.perm || can(i.perm)) }))
+    .filter((g) => g.items.length > 0);
 
   // State for collapsible submenus
   const [isAstrologersOpen, setIsAstrologersOpen] = useState(currentPath.startsWith('/astrologers'));

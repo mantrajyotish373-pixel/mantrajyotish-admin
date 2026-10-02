@@ -146,7 +146,7 @@ export default function SettingsPage() {
           name: u.firstname ? `${u.firstname} ${u.lastname || ''}`.trim() : (u.phone || 'Admin'),
           email: u.email || 'admin@astroadmin.com',
           phone: u.phone || '+91 98765 43210',
-          role: u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) + ' Admin' : 'Super Admin',
+          role: u.roleName || (u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) + ' Admin' : 'Admin'),
           avatar: u.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
         };
       } catch (e) {}

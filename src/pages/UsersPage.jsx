@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { can } from '../config/authSession';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -1118,13 +1119,15 @@ const UsersPage = () => {
                           <UserMinus size={13} />
                           <span>Block User</span>
                         </button>
-                        <button 
+                        {can('users.delete') && (
+<button 
                           onClick={handleDeleteUser}
                           className="flex items-center gap-2 px-3 py-2 border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/30 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 justify-start transition-colors cursor-pointer w-full"
                         >
                           <Trash2 size={13} className="text-rose-500 dark:text-rose-400" />
                           <span>Delete User Account</span>
                         </button>
+)}
                         <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-750 dark:text-slate-200 justify-start transition-colors">
                           <Key size={13} className="text-slate-400" />
                           <span>Reset Password</span>
