@@ -77,7 +77,7 @@ export default function AdminInterviewRoom() {
   const previewVideoRef = useRef(null);
   const pipVideoRef = useRef(null);
   const clientRef = useRef(null);
-  const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+  const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
 
   // 1. Fetch Agora Token and Channel info on mount
   useEffect(() => {

@@ -139,7 +139,7 @@ const WithdrawRequestsPage = () => {
   useEffect(() => {
     setLoading(true);
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const headers = {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})

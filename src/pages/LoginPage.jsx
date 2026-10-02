@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ArrowRight, Sun, Moon } from 'lucide-react';
+import { saveSession } from '../config/authSession';
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ export default function LoginPage({ onLogin }) {
 
     try {
       const cleanUsername = username.trim();
-      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/login`, {
         method: "POST",
         headers: {
@@ -69,23 +70,8 @@ export default function LoginPage({ onLogin }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        localStorage.setItem('isAuthenticated', 'true');
-        // Handle both standard data.token and direct token payloads safely
-        if (data.data) {
-          if (data.data.token) {
-            localStorage.setItem('authToken', data.data.token);
-          }
-          if (data.data.user) {
-            localStorage.setItem('user', JSON.stringify(data.data.user));
-          }
-        } else {
-          if (data.token) {
-            localStorage.setItem('authToken', data.token);
-          }
-          if (data.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
-        }
+        const payload = data.data || data;
+        saveSession({ token: payload.token, refreshToken: payload.refreshToken, admin: payload.admin || payload.user });
         setIsLoading(false);
         if (onLogin) {
           onLogin();

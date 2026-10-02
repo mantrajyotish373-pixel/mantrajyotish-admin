@@ -29,7 +29,7 @@ const Sidebar = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/pending`, {
       headers: {
         'Content-Type': 'application/json',

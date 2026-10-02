@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import { hasSession, clearSession, getAccessToken, refreshAccessToken, apiBase, SESSION_EXPIRED_EVENT } from './config/authSession';
 import Header from './components/Header';
 import DashboardCards from './components/DashboardCards';
 import RevenueChart from './components/RevenueChart';
@@ -56,7 +57,7 @@ function App() {
       if (showLoading && !dashboardStats) {
         setStatsLoading(true);
       }
-      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app";
+      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
       const token = localStorage.getItem("authToken") || localStorage.getItem("token");
       
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/admin/dashboard-stats`, {
@@ -84,9 +85,27 @@ function App() {
     }
   };
 
+  // Logged in only when a server-issued refresh token exists. Old flag-only sessions are discarded.
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
+    if (hasSession()) return true;
+    clearSession();
+    return false;
   });
+
+  useEffect(() => {
+    const onExpired = () => setIsAuthenticated(false);
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  // Verify the session with the server on load; a revoked/deleted admin is logged out immediately.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    (async () => {
+      if (!getAccessToken()) await refreshAccessToken();
+      try { await fetch(`${apiBase}/api/admin/profile`); } catch { /* offline: keep session */ }
+    })();
+  }, [isAuthenticated]);
 
   const location = useLocation();
   const currentPath = location.pathname;

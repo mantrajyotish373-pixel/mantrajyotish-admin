@@ -351,7 +351,7 @@ const UsersPage = () => {
   const fetchUsers = (showLoading = false) => {
     if (showLoading) setIsLoading(true);
     setError(null);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const token = localStorage.getItem('authToken');
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/user/all`, {
       headers: {
@@ -446,7 +446,7 @@ const UsersPage = () => {
 
     setIsSubmitting(true);
     const token = localStorage.getItem('authToken');
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/user/create`, {
       method: "POST",
       headers: {
@@ -510,7 +510,7 @@ const UsersPage = () => {
     }
 
     setIsSubmitting(true);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const token = localStorage.getItem('authToken');
     
     const url = `${apiBaseUrl.replace(/\/$/, '')}/api/wallet/update-balance`;
@@ -566,7 +566,7 @@ const UsersPage = () => {
     if (!confirmDelete) return;
 
     setIsSubmitting(true);
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const token = localStorage.getItem('authToken');
     
     const url = `${apiBaseUrl.replace(/\/$/, '')}/api/user/delete/${selectedUser.id}`;

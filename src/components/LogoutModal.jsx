@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ShieldCheck, CheckCircle } from 'lucide-react';
+import { logout } from '../config/authSession';
 
 export default function LogoutModal({ onLogout }) {
   const navigate = useNavigate();
@@ -12,14 +13,11 @@ export default function LogoutModal({ onLogout }) {
 
   const handleLogout = () => {
     setStep('processing');
-    setTimeout(() => {
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+    logout().finally(() => {
       if (onLogout) {
         onLogout();
       }
-    }, 600);
+    });
   };
 
   const handleLoginBack = () => {

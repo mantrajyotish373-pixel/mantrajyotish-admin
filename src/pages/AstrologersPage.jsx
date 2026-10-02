@@ -353,7 +353,7 @@ const AstrologersPage = () => {
     const token = localStorage.getItem('authToken');
     setIsLoading(true);
     
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const endpoint = status === 'cleared'
       ? `${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass/${astroId}`
       : `${apiBaseUrl.replace(/\/$/, '')}/api/interview/fail/${astroId}`;
@@ -394,7 +394,7 @@ const AstrologersPage = () => {
   const executeStatusChange = (astro, statusVal) => {
     const token = localStorage.getItem('authToken');
     setIsLoading(true);
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
 
     const interviewEndpoint = statusVal === 'approved'
       ? `${apiBaseUrl.replace(/\/$/, '')}/api/interview/pass`
@@ -504,7 +504,7 @@ const AstrologersPage = () => {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
 
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const fetchAll = fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astro/all?status=all`, { headers })
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch astrologer profiles');
@@ -735,7 +735,7 @@ const AstrologersPage = () => {
   };
 
   const handleUpdateSubmit = async () => {
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     const token = localStorage.getItem('authToken');
     
     const payload = {
@@ -775,7 +775,7 @@ const AstrologersPage = () => {
     showConfirm(
       "Are you sure you want to permanently delete this astrologer profile? This action cannot be undone.",
       async () => {
-        const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+        const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
         const token = localStorage.getItem('authToken');
 
         try {
@@ -861,7 +861,7 @@ const AstrologersPage = () => {
       about: data.get('about') || ''
     };
 
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/astrologer/register`, {
       method: 'POST',
       headers: {
@@ -1419,7 +1419,7 @@ const AstrologersPage = () => {
       const token = localStorage.getItem('authToken');
       setIsLoading(true);
       
-      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://mantrajyotish-backend.vercel.app/";
+      const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
       
       const combinedDate = new Date(`${date} ${time}`);
 
