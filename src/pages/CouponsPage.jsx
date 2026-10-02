@@ -269,6 +269,9 @@ const CouponsPage = () => {
 
   return (
     <div className="space-y-6 select-none pb-8">
+      <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-sm font-semibold">
+        Coupons are not live yet. Anything created or edited here is only a preview: it is not saved to the server and is not applied in the user apps.
+      </div>
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

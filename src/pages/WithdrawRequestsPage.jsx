@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { can, apiBase } from '../config/authSession';
 import { 
   Wallet, 
   Clock, 
@@ -17,110 +18,6 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 // Withdraw requests mock data matching the screenshot
-const initialRequests = [
-  {
-    id: '#WR1250',
-    user: {
-      name: 'Rohit Sharma',
-      email: 'rohit@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'
-    },
-    amount: '₹5,000',
-    amountVal: 5000,
-    method: 'UPI',
-    accountDetails: 'UPI ID rohit@upi',
-    requestedOn: {
-      date: '25 May 2025',
-      time: '10:30 AM'
-    },
-    status: 'Pending'
-  },
-  {
-    id: '#WR1249',
-    user: {
-      name: 'Priya Singh',
-      email: 'priya.singh@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop'
-    },
-    amount: '₹3,200',
-    amountVal: 3200,
-    method: 'Bank Transfer',
-    accountDetails: 'HDFC Bank **** 4321',
-    requestedOn: {
-      date: '25 May 2025',
-      time: '09:15 AM'
-    },
-    status: 'Pending'
-  },
-  {
-    id: '#WR1248',
-    user: {
-      name: 'Amit Kumar',
-      email: 'amit.kumar@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-    },
-    amount: '₹7,500',
-    amountVal: 7500,
-    method: 'UPI',
-    accountDetails: 'UPI ID amit@upi',
-    requestedOn: {
-      date: '24 May 2025',
-      time: '07:45 PM'
-    },
-    status: 'Approved'
-  },
-  {
-    id: '#WR1247',
-    user: {
-      name: 'Sneha Patel',
-      email: 'sneha.patel@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'
-    },
-    amount: '₹2,800',
-    amountVal: 2800,
-    method: 'Bank Transfer',
-    accountDetails: 'ICICI Bank **** 1122',
-    requestedOn: {
-      date: '24 May 2025',
-      time: '06:20 PM'
-    },
-    status: 'Rejected'
-  },
-  {
-    id: '#WR1246',
-    user: {
-      name: 'Vikash Yadav',
-      email: 'vikash.yadav@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'
-    },
-    amount: '₹4,600',
-    amountVal: 4600,
-    method: 'UPI',
-    accountDetails: 'UPI ID vikash@upi',
-    requestedOn: {
-      date: '24 May 2025',
-      time: '04:10 PM'
-    },
-    status: 'Pending'
-  },
-  {
-    id: '#WR1245',
-    user: {
-      name: 'Neha Joshi',
-      email: 'neha.joshi@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
-    },
-    amount: '₹6,900',
-    amountVal: 6900,
-    method: 'Bank Transfer',
-    accountDetails: 'Axis Bank **** 7788',
-    requestedOn: {
-      date: '23 May 2025',
-      time: '08:30 PM'
-    },
-    status: 'Approved'
-  }
-];
 
 // Withdrawal summary configuration
 const summaryData = [
@@ -136,44 +33,45 @@ const WithdrawRequestsPage = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [activeSubTab, setActiveSubTab] = useState('All Requests');
 
-  useEffect(() => {
-    setLoading(true);
-    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    const apiBaseUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_BASE_URL || "https://api.mantrajyotish.com";
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
+  const [actionError, setActionError] = useState('');
+  const [busyId, setBusyId] = useState(null);
 
-    fetch(`${apiBaseUrl.replace(/\/$/, '')}/api/withdraw/all`, { headers })
-      .then(res => res.ok ? res.json() : null)
-      .then(json => {
-        if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
-          setRequests(json.data);
-        } else {
-          setRequests(initialRequests);
-        }
-      })
-      .catch(() => {
-        setRequests(initialRequests);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+  const loadRequests = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiBase}/api/withdraw/all`);
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Could not load withdraw requests');
+      setRequests(json.data);
+      setActionError('');
+    } catch (err) {
+      setRequests([]);
+      setActionError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Interactive approve/reject actions
-  const handleApprove = (id) => {
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Approved' } : r));
-  };
+  useEffect(() => { setLoading(true); loadRequests(); }, [loadRequests]);
 
-  const handleReject = (id) => {
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'Rejected' } : r));
+  // Approve = money has been transferred to the astrologer outside the platform.
+  // Reject = the held amount is refunded to the astrologer's wallet.
+  const act = async (id, action) => {
+    const verb = action === 'approve' ? 'mark this withdrawal as PAID (you must have already transferred the money)' : 'reject this withdrawal and refund the amount to the astrologer wallet';
+    if (!window.confirm(`Are you sure you want to ${verb}?`)) return;
+    setBusyId(id); setActionError('');
+    try {
+      const res = await fetch(`${apiBase}/api/withdraw/${id}/${action}`, { method: 'POST' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) throw new Error(json.message || 'Action failed');
+      await loadRequests();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setBusyId(null);
+    }
   };
-
-  const handleApproveAll = () => {
-    setRequests(prev => prev.map(r => r.status === 'Pending' ? { ...r, status: 'Approved' } : r));
-  };
+  const handleApprove = (id) => act(id, 'approve');
+  const handleReject = (id) => act(id, 'reject');
 
   // Filter logic
   const filteredRequests = useMemo(() => {
@@ -199,7 +97,7 @@ const WithdrawRequestsPage = () => {
   const handleExportCSV = () => {
     const headers = ['Request ID,User Name,User Email,Amount,Method,Account Details,Date,Time,Status\n'];
     const rows = filteredRequests.map(r => 
-      `${r.id},"${r.user?.name || 'User'}",${r.user?.email || 'N/A'},${String(r.amount || '').replace('₹', '')},"${r.method}","${r.accountDetails}",${r.requestedOn?.date || ''},${r.requestedOn?.time || ''},${r.status}`
+      `${r.displayId || r.id},"${r.user?.name || 'User'}",${r.user?.email || 'N/A'},${String(r.amount || '').replace('₹', '')},"${r.method}","${r.accountDetails}",${r.requestedOn?.date || ''},${r.requestedOn?.time || ''},${r.status}`
     );
     const blob = new Blob([...headers, ...rows.map(ro => ro + '\n')], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -258,6 +156,9 @@ const WithdrawRequestsPage = () => {
 
   return (
     <div className="space-y-6 select-none pb-8">
+      {actionError && (
+        <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-semibold">{actionError}</div>
+      )}
       
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -397,7 +298,7 @@ const WithdrawRequestsPage = () => {
                   {filteredRequests.length > 0 ? (
                     filteredRequests.map((req) => (
                       <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-3 font-bold text-slate-600 select-text">{req.id}</td>
+                        <td className="py-4 px-3 font-bold text-slate-600 select-text">{req.displayId || req.id}</td>
                         
                         {/* User profile */}
                         <td className="py-4 px-3">
@@ -453,7 +354,10 @@ const WithdrawRequestsPage = () => {
                         <td className="py-4 px-3 text-center">
                           {req.status === 'Pending' ? (
                             <div className="flex items-center justify-center gap-1.5">
+                              {!can('withdrawals.manage') && <span className="text-slate-300 font-bold">—</span>}
+                              {can('withdrawals.manage') && (<>
                               <button 
+                                disabled={busyId === req.id}
                                 onClick={() => handleApprove(req.id)}
                                 className="p-1 border border-emerald-200 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors"
                                 title="Approve Request"
@@ -461,12 +365,14 @@ const WithdrawRequestsPage = () => {
                                 <Check size={12} />
                               </button>
                               <button 
+                                disabled={busyId === req.id}
                                 onClick={() => handleReject(req.id)}
                                 className="p-1 border border-rose-200 hover:bg-rose-50 text-rose-500 rounded-md transition-colors"
                                 title="Reject Request"
                               >
                                 <X size={12} />
                               </button>
+                              </>)}
                             </div>
                           ) : (
                             <span className="text-slate-300 font-bold">—</span>
@@ -590,14 +496,6 @@ const WithdrawRequestsPage = () => {
             <div className="bg-[#FCFAF8] border border-slate-100 rounded-2xl p-5 shadow-sm space-y-3">
               <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">Quick Actions</h4>
               
-              <button 
-                onClick={handleApproveAll}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-emerald-500/40 hover:bg-emerald-50/20 text-emerald-600 rounded-xl text-xs font-bold transition-all"
-              >
-                <CheckCircle size={14} />
-                <span>Approve All Pending</span>
-              </button>
-
               <button 
                 onClick={handleExportCSV}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-[#FA5A24]/40 hover:bg-[#FA5A24]/5 text-[#FA5A24] rounded-xl text-xs font-bold transition-all"
