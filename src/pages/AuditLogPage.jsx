@@ -1,10 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { apiBase } from '../config/authSession';
 
+const PAGE_SIZE = 20;
 const MODULES = ['auth', 'team', 'users', 'astrologers', 'kyc', 'interviews', 'bookings', 'payments', 'finance', 'withdrawals', 'coupons', 'banners', 'dashboard'];
 
 const statusClass = (code) =>
   code >= 500 ? 'bg-red-50 text-red-500' : code >= 400 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600';
+
+// 1 … 4 5 [6] 7 8 … 20
+const pageNumbers = (page, pages) => {
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
+  const out = [1];
+  const start = Math.max(2, page - 2), end = Math.min(pages - 1, page + 2);
+  if (start > 2) out.push('…');
+  for (let n = start; n <= end; n++) out.push(n);
+  if (end < pages - 1) out.push('…');
+  out.push(pages);
+  return out;
+};
 
 export default function AuditLogPage() {
   const [items, setItems] = useState([]);
@@ -19,7 +32,7 @@ export default function AuditLogPage() {
 
   const load = useCallback(async (p = 1) => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(p), limit: '50' });
+    const params = new URLSearchParams({ page: String(p), limit: String(PAGE_SIZE) });
     Object.entries(filters).forEach(([k, v]) => {
       if (!v) return;
       params.set(k, k === 'to' ? new Date(`${v}T23:59:59`).toISOString() : k === 'from' ? new Date(`${v}T00:00:00`).toISOString() : v);
@@ -96,11 +109,21 @@ export default function AuditLogPage() {
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-slate-400 text-xs">Page {page} of {pages}</span>
-        <div className="flex gap-2">
-          <button disabled={page <= 1} onClick={() => load(page - 1)} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">Previous</button>
-          <button disabled={page >= pages} onClick={() => load(page + 1)} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">Next</button>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+        <span className="text-slate-400 text-xs">
+          {total === 0 ? 'No entries' : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total.toLocaleString('en-IN')} entries`}
+        </span>
+        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+          <button disabled={page <= 1 || loading} onClick={() => load(1)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">« First</button>
+          <button disabled={page <= 1 || loading} onClick={() => load(page - 1)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">‹ Prev</button>
+          {pageNumbers(page, pages).map((n, i) => n === '…' ? (
+            <span key={`gap${i}`} className="px-1 text-slate-400">…</span>
+          ) : (
+            <button key={n} disabled={loading} onClick={() => load(n)}
+              className={`min-w-8 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${n === page ? 'bg-[#FA5A24] border-[#FA5A24] text-white' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30'}`}>{n}</button>
+          ))}
+          <button disabled={page >= pages || loading} onClick={() => load(page + 1)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">Next ›</button>
+          <button disabled={page >= pages || loading} onClick={() => load(pages)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold disabled:opacity-40">Last »</button>
         </div>
       </div>
     </div>
