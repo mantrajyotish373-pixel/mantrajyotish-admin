@@ -63,51 +63,20 @@ function ProfileTab({ admin }) {
   );
 }
 
-// ---------------- My access ----------------
+// ---------------- My access (super admin only) ----------------
 function AccessTab({ admin }) {
   const navigate = useNavigate();
-  const [catalog, setCatalog] = useState([]);
-  useEffect(() => { api('/permissions').then((r) => setCatalog(r.data)).catch(() => {}); }, []);
-  const mine = new Set(admin.permissions || []);
-  const superAdmin = admin.role === 'superadmin';
-
   return (
-    <div className="space-y-4">
-      <div className={card}>
-        <h3 className="font-bold text-slate-800 dark:text-slate-100">{admin.roleName}</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {superAdmin
-            ? 'You are the super admin: full access to every section and all data (including earnings), plus team, roles, platform settings and the audit log, which only you can use.'
-            : `You have ${mine.size} permission${mine.size === 1 ? '' : 's'}. Anything not ticked below is hidden or blocked for your account. Ask the super admin if you need more access.`}
-        </p>
-        {superAdmin && (
-          <div className="flex flex-wrap gap-2 mt-3 text-xs font-bold">
-            <button className={btn} onClick={() => navigate('/team')}>Team members</button>
-            <button className={btn} onClick={() => navigate('/roles')}>Roles & permissions</button>
-            <button className={btn} onClick={() => navigate('/audit-log')}>Audit log</button>
-          </div>
-        )}
+    <div className={card}>
+      <h3 className="font-bold text-slate-800 dark:text-slate-100">{admin.roleName}</h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        You are the super admin: full access to every section and all data (including earnings), plus team, roles, platform settings and the audit log, which only you can use.
+      </p>
+      <div className="flex flex-wrap gap-2 mt-3 text-xs font-bold">
+        <button className={btn} onClick={() => navigate('/team')}>Team members</button>
+        <button className={btn} onClick={() => navigate('/roles')}>Roles & permissions</button>
+        <button className={btn} onClick={() => navigate('/audit-log')}>Audit log</button>
       </div>
-      {!superAdmin && (
-        <div className={card}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {catalog.map((m) => {
-              const any = m.actions.some((a) => mine.has(`${m.key}.${a.key}`));
-              return (
-                <div key={m.key} className={`rounded-xl border p-3 ${any ? 'border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/10' : 'border-slate-100 dark:border-slate-700/60 opacity-60'}`}>
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{m.label}</div>
-                  <ul className="mt-1.5 space-y-1">
-                    {m.actions.map((a) => {
-                      const on = mine.has(`${m.key}.${a.key}`);
-                      return <li key={a.key} className={`text-xs flex gap-2 ${on ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 line-through'}`}><span>{on ? '✓' : '✕'}</span>{a.label}</li>;
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -321,9 +290,8 @@ export default function SettingsPage() {
 
   const tabs = useMemo(() => [
     { id: 'profile', label: 'My Profile' },
-    { id: 'access', label: 'My Access' },
     { id: 'security', label: 'Security' },
-    ...(superAdmin ? [{ id: 'platform', label: 'Platform' }, { id: 'system', label: 'System & Payments' }, { id: 'team', label: 'Team & Roles' }] : [])
+    ...(superAdmin ? [{ id: 'access', label: 'My Access' }, { id: 'platform', label: 'Platform' }, { id: 'system', label: 'System & Payments' }, { id: 'team', label: 'Team & Roles' }] : [])
   ], [superAdmin]);
 
   const active = tabs.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'profile';
@@ -333,7 +301,7 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-5 w-full pb-8">
       <div>
         <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>Settings</h1>
-        <p className="text-xs md:text-sm text-slate-400 font-medium">{superAdmin ? 'Your account, platform configuration and system status.' : 'Your account, access and security.'}</p>
+        <p className="text-xs md:text-sm text-slate-400 font-medium">{superAdmin ? 'Your account, platform configuration and system status.' : 'Your profile and account security.'}</p>
       </div>
       <div className="flex gap-2 overflow-x-auto">
         {tabs.map((t) => (
@@ -342,7 +310,7 @@ export default function SettingsPage() {
         ))}
       </div>
       {active === 'profile' && <ProfileTab admin={admin} />}
-      {active === 'access' && <AccessTab admin={admin} />}
+      {active === 'access' && superAdmin && <AccessTab admin={admin} />}
       {active === 'security' && <SecurityTab admin={admin} />}
       {active === 'platform' && superAdmin && <PlatformTab />}
       {active === 'system' && superAdmin && <SystemTab />}
