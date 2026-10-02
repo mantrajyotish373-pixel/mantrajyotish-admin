@@ -10,6 +10,8 @@ export const ROUTE_PERMISSIONS = [
   { prefix: '/bookings', perm: 'bookings.view' },
   { prefix: '/chats', perm: 'chats.view' },
   { prefix: '/calls', perm: 'calls.view' },
+  { prefix: '/support', perm: 'support.view' },
+  { prefix: '/payment-logs', perm: 'payments.view' },
   { prefix: '/payments', perm: 'payments.view' },
   { prefix: '/withdraw-requests', perm: 'withdrawals.view' },
   { prefix: '/reports', perm: 'reports.view' },
@@ -19,6 +21,9 @@ export const ROUTE_PERMISSIONS = [
   { prefix: '/coupons', perm: 'promotions.view' },
   { prefix: '/promo-payouts', perm: 'promopayouts.view' },
   { prefix: '/banner-management', perm: 'banners.manage' },
+  { prefix: '/add-money-settings', perm: 'addmoney.view' },
+  { prefix: '/store', perm: 'store.view' },
+  { prefix: '/planet-insights', perm: 'planets.view' },
   { prefix: '/team', perm: 'SUPERADMIN' },
   { prefix: '/roles', perm: 'SUPERADMIN' },
   { prefix: '/audit-log', perm: 'SUPERADMIN' }

@@ -20,7 +20,12 @@ import {
   Star,
   Shield,
   KeyRound,
-  ScrollText
+  ScrollText,
+  ShoppingBag,
+  Orbit,
+  WalletCards,
+  ReceiptText,
+  LifeBuoy
 } from 'lucide-react';
 import { can, isSuperAdmin } from '../config/authSession';
 
@@ -83,6 +88,16 @@ const Sidebar = () => {
     activeTab = 'Offers';
   } else if (currentPath.startsWith('/promo-payouts')) {
     activeTab = 'Promo Payouts';
+  } else if (currentPath.startsWith('/support')) {
+    activeTab = 'Support';
+  } else if (currentPath.startsWith('/payment-logs')) {
+    activeTab = 'Payment Logs';
+  } else if (currentPath.startsWith('/add-money-settings')) {
+    activeTab = 'Add Money Settings';
+  } else if (currentPath.startsWith('/store')) {
+    activeTab = 'Astro Store';
+  } else if (currentPath.startsWith('/planet-insights')) {
+    activeTab = 'Planetary Insights';
   } else if (currentPath.startsWith('/reports')) {
     activeTab = 'Reports';
   } else if (currentPath.startsWith('/reviews')) {
@@ -131,10 +146,15 @@ const Sidebar = () => {
         { id: 'Interviews', label: 'Interviews', icon: Calendar, path: '/interviews', perm: 'interviews.view' },
         { id: 'Appointments', label: 'Appointments', icon: Calendar, path: '/bookings', perm: 'bookings.view' },
         { id: 'Payments', label: 'Payments', icon: IndianRupee, path: '/payments', perm: 'payments.view' },
+        { id: 'Support', label: 'Complaints', icon: LifeBuoy, path: '/support', perm: 'support.view' },
+        { id: 'Payment Logs', label: 'Payment Logs', icon: ReceiptText, path: '/payment-logs', perm: 'payments.view' },
         { id: 'Reports', label: 'Reports', icon: BarChart3, path: '/reports', perm: 'reports.view' },
         { id: 'Reviews', label: 'Reviews', icon: Star, path: '/reviews', perm: 'reviews.view' },
         { id: 'Offers', label: 'Offers & Bonus', icon: Ticket, path: '/promotions', perm: 'promotions.view' },
         { id: 'Promo Payouts', label: 'Promo Payouts', icon: IndianRupee, path: '/promo-payouts', perm: 'promopayouts.view' },
+        { id: 'Add Money Settings', label: 'Add Money Settings', icon: WalletCards, path: '/add-money-settings', perm: 'addmoney.view' },
+        { id: 'Astro Store', label: 'Astro Store', icon: ShoppingBag, path: '/store', perm: 'store.view' },
+        { id: 'Planetary Insights', label: 'Planetary Insights', icon: Orbit, path: '/planet-insights', perm: 'planets.view' },
         { id: 'Notifications', label: 'Notifications', icon: Bell, path: '/notifications', perm: 'notifications.view' }
       ]
     },

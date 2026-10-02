@@ -19,6 +19,11 @@ import KycVerificationPage from './pages/KycVerificationPage';
 import OffersPage from './pages/OffersPage';
 import PromoPayoutsPage from './pages/PromoPayoutsPage';
 import BannerManagementPage from './pages/BannerManagementPage';
+import StorePage from './pages/StorePage';
+import PaymentLogsPage from './pages/PaymentLogsPage';
+import SupportTicketsPage from './pages/SupportTicketsPage';
+import AddMoneySettingsPage from './pages/AddMoneySettingsPage';
+import PlanetInsightsPage from './pages/PlanetInsightsPage';
 import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import LogoutModal from './components/LogoutModal';
@@ -123,7 +128,7 @@ function App() {
   }, [isAuthenticated]);
 
   const allowedFor = (perm) => !perm || (perm === 'SUPERADMIN' ? isSuperAdmin() : can(perm));
-  const LANDING_ORDER = ['/dashboard', '/users', '/astrologers/all', '/kyc-verification', '/interviews', '/bookings', '/chats', '/calls', '/payments', '/withdraw-requests', '/reports', '/reviews', '/notifications', '/promotions', '/promo-payouts', '/banner-management', '/team'];
+  const LANDING_ORDER = ['/dashboard', '/users', '/astrologers/all', '/kyc-verification', '/interviews', '/bookings', '/chats', '/calls', '/payments', '/withdraw-requests', '/reports', '/reviews', '/notifications', '/promotions', '/promo-payouts', '/banner-management', '/store', '/planet-insights', '/add-money-settings', '/payment-logs', '/support', '/team'];
   const landingPath = LANDING_ORDER.find((p) => allowedFor(permissionForPath(p))) || '/settings';
 
   const location = useLocation();
@@ -161,6 +166,16 @@ function App() {
     activeTab = 'Promo Payouts';
   } else if (currentPath.startsWith('/banner-management')) {
     activeTab = 'Banner Management';
+  } else if (currentPath.startsWith('/support')) {
+    activeTab = 'Support';
+  } else if (currentPath.startsWith('/payment-logs')) {
+    activeTab = 'Payment Logs';
+  } else if (currentPath.startsWith('/add-money-settings')) {
+    activeTab = 'Add Money Settings';
+  } else if (currentPath.startsWith('/store')) {
+    activeTab = 'Astro Store';
+  } else if (currentPath.startsWith('/planet-insights')) {
+    activeTab = 'Planetary Insights';
   } else if (currentPath.startsWith('/reports')) {
     activeTab = 'Reports';
   } else if (currentPath.startsWith('/reviews')) {
@@ -317,6 +332,11 @@ function App() {
                     <Route path="/promo-payouts" element={<PromoPayoutsPage />} />
                     <Route path="/coupons" element={<Navigate to="/promotions" replace />} />
                     <Route path="/banner-management" element={<BannerManagementPage />} />
+                    <Route path="/support" element={<SupportTicketsPage />} />
+                    <Route path="/payment-logs" element={<PaymentLogsPage />} />
+                    <Route path="/add-money-settings" element={<AddMoneySettingsPage />} />
+                    <Route path="/store" element={<StorePage />} />
+                    <Route path="/planet-insights" element={<PlanetInsightsPage />} />
                     <Route path="/astrologers/*" element={<AstrologersPage />} />
                     <Route path="/reports" element={<ReportsPage />} />
                     <Route path="/reviews" element={
