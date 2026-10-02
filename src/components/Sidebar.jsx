@@ -79,8 +79,10 @@ const Sidebar = () => {
     activeTab = 'KYC Verification';
   } else if (currentPath.startsWith('/interviews') || currentPath.startsWith('/interview-room')) {
     activeTab = 'Interviews';
-  } else if (currentPath.startsWith('/coupons')) {
-    activeTab = 'Coupons';
+  } else if (currentPath.startsWith('/promotions') || currentPath.startsWith('/coupons')) {
+    activeTab = 'Offers';
+  } else if (currentPath.startsWith('/promo-payouts')) {
+    activeTab = 'Promo Payouts';
   } else if (currentPath.startsWith('/reports')) {
     activeTab = 'Reports';
   } else if (currentPath.startsWith('/reviews')) {
@@ -131,7 +133,8 @@ const Sidebar = () => {
         { id: 'Payments', label: 'Payments', icon: IndianRupee, path: '/payments', perm: 'payments.view' },
         { id: 'Reports', label: 'Reports', icon: BarChart3, path: '/reports', perm: 'reports.view' },
         { id: 'Reviews', label: 'Reviews', icon: Star, path: '/reviews', perm: 'reviews.view' },
-        { id: 'Coupons', label: 'Coupons', icon: Ticket, path: '/coupons', perm: 'coupons.manage' },
+        { id: 'Offers', label: 'Offers & Bonus', icon: Ticket, path: '/promotions', perm: 'promotions.view' },
+        { id: 'Promo Payouts', label: 'Promo Payouts', icon: IndianRupee, path: '/promo-payouts', perm: 'promopayouts.view' },
         { id: 'Notifications', label: 'Notifications', icon: Bell, path: '/notifications', perm: 'notifications.view' }
       ]
     },

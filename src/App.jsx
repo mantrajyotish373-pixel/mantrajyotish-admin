@@ -16,7 +16,8 @@ import CallsPage from './pages/CallsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import WithdrawRequestsPage from './pages/WithdrawRequestsPage';
 import KycVerificationPage from './pages/KycVerificationPage';
-import CouponsPage from './pages/CouponsPage';
+import OffersPage from './pages/OffersPage';
+import PromoPayoutsPage from './pages/PromoPayoutsPage';
 import BannerManagementPage from './pages/BannerManagementPage';
 import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
@@ -122,7 +123,7 @@ function App() {
   }, [isAuthenticated]);
 
   const allowedFor = (perm) => !perm || (perm === 'SUPERADMIN' ? isSuperAdmin() : can(perm));
-  const LANDING_ORDER = ['/dashboard', '/users', '/astrologers/all', '/kyc-verification', '/interviews', '/bookings', '/chats', '/calls', '/payments', '/withdraw-requests', '/reports', '/reviews', '/notifications', '/coupons', '/banner-management', '/team'];
+  const LANDING_ORDER = ['/dashboard', '/users', '/astrologers/all', '/kyc-verification', '/interviews', '/bookings', '/chats', '/calls', '/payments', '/withdraw-requests', '/reports', '/reviews', '/notifications', '/promotions', '/promo-payouts', '/banner-management', '/team'];
   const landingPath = LANDING_ORDER.find((p) => allowedFor(permissionForPath(p))) || '/settings';
 
   const location = useLocation();
@@ -154,8 +155,10 @@ function App() {
     activeTab = 'Interviews';
   } else if (currentPath.startsWith('/interview-room')) {
     activeTab = 'Interviews';
-  } else if (currentPath.startsWith('/coupons')) {
-    activeTab = 'Coupons';
+  } else if (currentPath.startsWith('/promotions') || currentPath.startsWith('/coupons')) {
+    activeTab = 'Offers';
+  } else if (currentPath.startsWith('/promo-payouts')) {
+    activeTab = 'Promo Payouts';
   } else if (currentPath.startsWith('/banner-management')) {
     activeTab = 'Banner Management';
   } else if (currentPath.startsWith('/reports')) {
@@ -310,7 +313,9 @@ function App() {
                     <Route path="/kyc-verification" element={<KycVerificationPage />} />
                     <Route path="/interviews" element={<InterviewsPage />} />
                     <Route path="/interview-room/:id" element={<AdminInterviewRoom />} />
-                    <Route path="/coupons" element={<CouponsPage />} />
+                    <Route path="/promotions" element={<OffersPage />} />
+                    <Route path="/promo-payouts" element={<PromoPayoutsPage />} />
+                    <Route path="/coupons" element={<Navigate to="/promotions" replace />} />
                     <Route path="/banner-management" element={<BannerManagementPage />} />
                     <Route path="/astrologers/*" element={<AstrologersPage />} />
                     <Route path="/reports" element={<ReportsPage />} />

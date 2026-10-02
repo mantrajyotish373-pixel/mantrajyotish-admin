@@ -75,12 +75,12 @@ const QuickActions = ({ isLoading }) => {
       path: '/payments'
     },
     {
-      label: 'Coupons',
+      label: 'Offers',
       icon: Percent,
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-950/40',
       hoverBg: 'hover:bg-amber-100/70 dark:hover:bg-amber-950/60',
-      path: '/coupons'
+      path: '/promotions'
     },
     {
       label: 'Reports',
