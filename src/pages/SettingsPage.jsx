@@ -1,484 +1,352 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  User, 
-  Lock, 
-  Bell, 
-  Globe, 
-  IndianRupee, 
-  ShieldCheck, 
-  Monitor, 
-  Cloud, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Sparkles, 
-  ChevronRight, 
-  Info, 
-  CheckCircle,
-  Laptop
-} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { apiBase, getAdmin, isSuperAdmin, refreshProfile, PROFILE_UPDATED_EVENT } from '../config/authSession';
 
-export default function SettingsPage() {
-  const navigate = useNavigate();
-  const settingsList = [
-    {
-      title: 'Profile Settings',
-      description: 'Update your profile information, email address and contact details.',
-      icon: User,
-      iconBg: 'bg-orange-50',
-      iconColor: 'text-[#FA5A24]',
-    },
-    {
-      title: 'Account Settings',
-      description: 'Manage your account preferences and administrator information.',
-      icon: Lock,
-      iconBg: 'bg-purple-50',
-      iconColor: 'text-purple-600',
-    },
-    {
-      title: 'Notification Settings',
-      description: 'Configure email, SMS and in-app notification preferences.',
-      icon: Bell,
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-    },
-    {
-      title: 'Website Settings',
-      description: 'Update website name, logo, favicon and maintenance mode.',
-      icon: Globe,
-      iconBg: 'bg-blue-50',
-      iconColor: 'text-blue-500',
-    },
-    {
-      title: 'Payment Settings',
-      description: 'Manage payment methods, gateway configuration and related preferences.',
-      icon: IndianRupee,
-      iconBg: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
-    },
-    {
-      title: 'Security Settings',
-      description: 'Manage passwords, two-factor authentication and login security.',
-      icon: ShieldCheck,
-      iconBg: 'bg-rose-50',
-      iconColor: 'text-rose-600',
-    },
-    {
-      title: 'System Settings',
-      description: 'Manage system preferences, language, timezone and other configurations.',
-      icon: Monitor,
-      iconBg: 'bg-indigo-50',
-      iconColor: 'text-indigo-600',
-    },
-    {
-      title: 'Backup & Restore',
-      description: 'Backup your data and restore it when needed.',
-      icon: Cloud,
-      iconBg: 'bg-orange-50',
-      iconColor: 'text-orange-500',
-    },
-  ];
-
-  const securityItems = [
-    {
-      title: 'Password',
-      subtext: 'Last changed on 10 May 2025',
-      badge: 'Updated',
-      badgeClass: 'bg-[#E6F4EA] text-[#137333]',
-      icon: Lock,
-    },
-    {
-      title: 'Two-Factor Authentication',
-      subtext: 'Added extra security to your account',
-      badge: 'Enabled',
-      badgeClass: 'bg-[#E6F4EA] text-[#137333]',
-      icon: ShieldCheck,
-    },
-    {
-      title: 'Login Sessions',
-      subtext: 'Manage your active sessions',
-      badge: '3 Active',
-      badgeClass: 'bg-blue-50 text-blue-600',
-      icon: Laptop,
-    },
-    {
-      title: 'Account Status',
-      subtext: 'Your account is active and secure',
-      badge: 'Active',
-      badgeClass: 'bg-[#E6F4EA] text-[#137333]',
-      icon: CheckCircle,
-    },
-  ];
-
-  // Modal state for active setting section being edited
-  const [activeModal, setActiveModal] = useState(null);
-  const [saveSuccess, setSaveSuccess] = useState('');
-
-  // Local state initialized from localStorage for system settings
-  const [settingsData, setSettingsData] = useState(() => {
-    const saved = localStorage.getItem('appSettings');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return {
-      siteName: 'Astro Admin',
-      maintenanceMode: false,
-      emailNotifications: true,
-      smsNotifications: true,
-      pushNotifications: true,
-      currency: 'INR (₹)',
-      language: 'English',
-      timezone: 'Asia/Kolkata (GMT+05:30)',
-      twoFactorAuth: true,
-      autoBackup: true
-    };
+const api = async (path, opts = {}) => {
+  const res = await fetch(`${apiBase}/api/admin${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
   });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.success === false) throw new Error(json.message || `Request failed (${res.status})`);
+  return json;
+};
 
-  // Admin profile from localStorage
-  const adminUser = React.useMemo(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        return {
-          name: u.firstname ? `${u.firstname} ${u.lastname || ''}`.trim() : (u.phone || 'Admin'),
-          email: u.email || 'admin@astroadmin.com',
-          phone: u.phone || '+91 98765 43210',
-          role: u.roleName || (u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) + ' Admin' : 'Admin'),
-          avatar: u.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
-        };
-      } catch (e) {}
-    }
-    return {
-      name: 'Admin',
-      email: 'admin@astroadmin.com',
-      phone: '+91 98765 43210',
-      role: 'Super Admin',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'
-    };
-  }, []);
+const fmtDate = (d) => (d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—');
+const fmtUptime = (s) => { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return `${d ? `${d}d ` : ''}${h}h ${m}m`; };
+const device = (ua = '') => {
+  const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Linux/.test(ua) ? 'Linux' : 'Unknown device';
+  return `${browser} on ${os}`;
+};
 
-  const handleSaveSetting = (newSettings) => {
-    const updated = { ...settingsData, ...newSettings };
-    setSettingsData(updated);
-    localStorage.setItem('appSettings', JSON.stringify(updated));
-    setActiveModal(null);
-    setSaveSuccess('Setting updated successfully!');
-    setTimeout(() => setSaveSuccess(''), 3000);
+const card = 'rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 p-5 shadow-sm';
+const input = 'w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-sm disabled:opacity-60';
+const btn = 'px-4 py-2 rounded-xl bg-[#FA5A24] text-white text-sm font-bold hover:opacity-90 disabled:opacity-50';
+const Label = ({ children }) => <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">{children}</label>;
+const Msg = ({ m }) => (m ? <p className={`text-sm font-semibold ${m.ok ? 'text-emerald-600' : 'text-red-500'}`}>{m.text}</p> : null);
+
+// ---------------- Profile ----------------
+function ProfileTab({ admin }) {
+  const [name, setName] = useState(admin.name || '');
+  const [phone, setPhone] = useState(admin.phone || '');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const save = async () => {
+    setBusy(true); setMsg(null);
+    try { await api('/profile', { method: 'PUT', body: { name, phone } }); await refreshProfile(); setMsg({ ok: true, text: 'Profile saved.' }); }
+    catch (e) { setMsg({ ok: false, text: e.message }); }
+    setBusy(false);
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full select-none pb-8">
-      
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-shrink-0">
+    <div className={card}>
+      <div className="flex items-center gap-4 mb-5">
+        <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#FA5A24] flex items-center justify-center text-xl font-bold">{(admin.name || 'A').charAt(0).toUpperCase()}</div>
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>
-              Settings
-            </h1>
-            <Sparkles size={18} className="text-[#FA5A24] animate-pulse" />
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mt-1">
-            <span>Dashboard</span>
-            <span>&gt;</span>
-            <span className="text-[#FA5A24]">Settings</span>
-          </div>
+          <h3 className="font-bold text-slate-800 dark:text-slate-100">{admin.name}</h3>
+          <span className="text-[10px] font-extrabold text-[#FA5A24] bg-orange-50 dark:bg-orange-500/10 rounded-md px-2 py-0.5 uppercase tracking-wider">{admin.roleName}</span>
         </div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <div><Label>Full name</Label><input className={input} value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div><Label>Phone</Label><input className={input} value={phone} placeholder="+91 …" onChange={(e) => setPhone(e.target.value)} /></div>
+        <div><Label>Login email</Label><input className={input} value={admin.email} disabled /><p className="text-[11px] text-slate-400 mt-1">Your login email can only be changed by the super admin.</p></div>
+        <div><Label>Role</Label><input className={input} value={admin.roleName} disabled /></div>
+        <div><Label>Member since</Label><input className={input} value={fmtDate(admin.createdAt)} disabled /></div>
+        <div><Label>Last login</Label><input className={input} value={fmtDate(admin.lastLoginAt)} disabled /></div>
+      </div>
+      <div className="flex items-center gap-4 mt-5"><button className={btn} disabled={busy || !name.trim()} onClick={save}>{busy ? 'Saving…' : 'Save profile'}</button><Msg m={msg} /></div>
+    </div>
+  );
+}
 
-      {/* Success banner */}
-      {saveSuccess && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 dark:text-emerald-400 text-xs px-4 py-3 rounded-2xl font-semibold flex items-center gap-2 shadow-sm animate-fadeIn">
-          <CheckCircle size={16} />
-          <span>{saveSuccess}</span>
+// ---------------- My access ----------------
+function AccessTab({ admin }) {
+  const navigate = useNavigate();
+  const [catalog, setCatalog] = useState([]);
+  useEffect(() => { api('/permissions').then((r) => setCatalog(r.data)).catch(() => {}); }, []);
+  const mine = new Set(admin.permissions || []);
+  const superAdmin = admin.role === 'superadmin';
+
+  return (
+    <div className="space-y-4">
+      <div className={card}>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100">{admin.roleName}</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          {superAdmin
+            ? 'You are the super admin: full access to every section and all data (including earnings), plus team, roles, platform settings and the audit log, which only you can use.'
+            : `You have ${mine.size} permission${mine.size === 1 ? '' : 's'}. Anything not ticked below is hidden or blocked for your account. Ask the super admin if you need more access.`}
+        </p>
+        {superAdmin && (
+          <div className="flex flex-wrap gap-2 mt-3 text-xs font-bold">
+            <button className={btn} onClick={() => navigate('/team')}>Team members</button>
+            <button className={btn} onClick={() => navigate('/roles')}>Roles & permissions</button>
+            <button className={btn} onClick={() => navigate('/audit-log')}>Audit log</button>
+          </div>
+        )}
+      </div>
+      {!superAdmin && (
+        <div className={card}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {catalog.map((m) => {
+              const any = m.actions.some((a) => mine.has(`${m.key}.${a.key}`));
+              return (
+                <div key={m.key} className={`rounded-xl border p-3 ${any ? 'border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/10' : 'border-slate-100 dark:border-slate-700/60 opacity-60'}`}>
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{m.label}</div>
+                  <ul className="mt-1.5 space-y-1">
+                    {m.actions.map((a) => {
+                      const on = mine.has(`${m.key}.${a.key}`);
+                      return <li key={a.key} className={`text-xs flex gap-2 ${on ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 line-through'}`}><span>{on ? '✓' : '✕'}</span>{a.label}</li>;
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left Side: Settings List (8 Columns) */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          {settingsList.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div 
-                key={idx}
-                onClick={() => {
-                  if (item.title === 'Profile Settings') {
-                    navigate('/edit-profile');
-                  } else {
-                    setActiveModal(item.title);
-                  }
-                }}
-                className="bg-white dark:bg-slate-800 p-4.5 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm flex items-center justify-between hover:border-orange-100 dark:hover:border-slate-600 hover:shadow-md hover:shadow-orange-500/5 transition-all duration-300 cursor-pointer group"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`w-11 h-11 rounded-full ${item.iconBg} dark:bg-slate-700 ${item.iconColor} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105`}>
-                    <Icon size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-[13px] font-bold text-slate-850 dark:text-slate-100 tracking-tight group-hover:text-[#FA5A24] dark:group-hover:text-[#FA5A24] transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium truncate mt-0.5 max-w-[280px] sm:max-w-md md:max-w-xl">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            );
-          })}
+// ---------------- Security: password + sessions ----------------
+function SecurityTab({ admin }) {
+  const [cur, setCur] = useState(''); const [next, setNext] = useState(''); const [again, setAgain] = useState('');
+  const [pwBusy, setPwBusy] = useState(false); const [pwMsg, setPwMsg] = useState(null);
+  const [sessions, setSessions] = useState([]); const [sMsg, setSMsg] = useState(null);
+  const refreshToken = localStorage.getItem('refreshToken');
+
+  const loadSessions = useCallback(async () => {
+    try { setSessions((await api('/sessions', { method: 'POST', body: { refreshToken } })).data); }
+    catch (e) { setSMsg({ ok: false, text: e.message }); }
+  }, [refreshToken]);
+  useEffect(() => { loadSessions(); }, [loadSessions]);
+
+  const changePw = async () => {
+    setPwMsg(null);
+    if (next !== again) return setPwMsg({ ok: false, text: 'New passwords do not match.' });
+    setPwBusy(true);
+    try {
+      await api('/password', { method: 'PUT', body: { currentPassword: cur, newPassword: next, refreshToken } });
+      setCur(''); setNext(''); setAgain('');
+      setPwMsg({ ok: true, text: 'Password changed. Other devices were signed out.' });
+      await Promise.all([refreshProfile(), loadSessions()]);
+    } catch (e) { setPwMsg({ ok: false, text: e.message }); }
+    setPwBusy(false);
+  };
+
+  const revoke = async (sid) => { try { await api(`/sessions/${sid}`, { method: 'DELETE' }); await loadSessions(); } catch (e) { setSMsg({ ok: false, text: e.message }); } };
+  const revokeOthers = async () => {
+    if (!window.confirm('Sign out every other device?')) return;
+    try { const r = await api('/sessions/revoke-others', { method: 'POST', body: { refreshToken } }); setSMsg({ ok: true, text: `Signed out ${r.removed} other device(s).` }); await loadSessions(); }
+    catch (e) { setSMsg({ ok: false, text: e.message }); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className={card}>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100">Change password</h3>
+        <p className="text-xs text-slate-400 mb-4">Last changed: {admin.passwordChangedAt ? fmtDate(admin.passwordChangedAt) : 'never changed since the account was created'}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl">
+          <div><Label>Current password</Label><input type="password" className={input} value={cur} onChange={(e) => setCur(e.target.value)} autoComplete="current-password" /></div>
+          <div><Label>New password (min 8)</Label><input type="password" className={input} value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" /></div>
+          <div><Label>Repeat new password</Label><input type="password" className={input} value={again} onChange={(e) => setAgain(e.target.value)} autoComplete="new-password" /></div>
         </div>
+        <div className="flex items-center gap-4 mt-4"><button className={btn} disabled={pwBusy || !cur || next.length < 8 || !again} onClick={changePw}>{pwBusy ? 'Changing…' : 'Change password'}</button><Msg m={pwMsg} /></div>
+      </div>
 
-        {/* Right Side: Admin Profile & Security Overview Widgets (4 Columns) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          
-          {/* Admin Profile Widget */}
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>
-                Admin Profile
-              </h3>
-              <button 
-                onClick={() => navigate('/view-profile')}
-                className="text-[10px] font-bold text-[#FA5A24] border border-[#FA5A24] px-2.5 py-1 rounded-xl hover:bg-[#FFF5F1]/30 transition-all cursor-pointer"
-              >
-                View Profile
-              </button>
-            </div>
-
-            <div className="flex items-center gap-4 mb-5 border-b border-slate-100 dark:border-slate-700/60 pb-5">
-              <img 
-                src={adminUser.avatar} 
-                alt="Admin Avatar" 
-                className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm flex-shrink-0"
-              />
+      <div className={card}>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div><h3 className="font-bold text-slate-800 dark:text-slate-100">Login sessions</h3><p className="text-xs text-slate-400">Devices currently signed in to your account.</p></div>
+          {sessions.length > 1 && <button onClick={revokeOthers} className="text-xs font-bold text-red-500 hover:underline whitespace-nowrap">Sign out all other devices</button>}
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+          {sessions.length === 0 && <p className="text-sm text-slate-400 py-2">No active sessions found.</p>}
+          {sessions.map((s) => (
+            <div key={s.sid} className="py-3 flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">{adminUser.name}</h4>
-                <span className="inline-block bg-[#FFF5F1] dark:bg-[#FA5A24]/15 text-[#FA5A24] text-[9px] font-extrabold px-2 py-0.5 rounded-md mt-1 shadow-sm">
-                  {adminUser.role}
-                </span>
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{device(s.userAgent)} {s.current && <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">This device</span>}</div>
+                <div className="text-xs text-slate-400">{s.ip || 'IP unknown'} · signed in {fmtDate(s.createdAt)} · last active {fmtDate(s.lastUsedAt)}</div>
               </div>
+              {!s.current && <button onClick={() => revoke(s.sid)} className="text-xs font-bold text-red-500 hover:underline">Sign out</button>}
             </div>
-
-            <div className="space-y-3.5">
-              <div className="flex items-center gap-3 text-xs">
-                <Mail size={14} className="text-slate-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 truncate">{adminUser.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <Phone size={14} className="text-slate-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">{adminUser.phone}</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <MapPin size={14} className="text-slate-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">Jaipur, Rajasthan, India</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <Calendar size={14} className="text-slate-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">Joined on 15 Mar 2024, 10:30 AM</span>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => navigate('/edit-profile')}
-              className="w-full text-center border border-[#FA5A24] text-[#FA5A24] text-xs font-bold py-2.5 rounded-xl hover:bg-[#FFF5F1]/30 transition-all mt-5 cursor-pointer"
-            >
-              Edit Profile
-            </button>
-          </div>
-
-          {/* Security Overview Widget */}
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-orange-50/50 dark:border-slate-700/60 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4" style={{ fontFamily: 'Outfit' }}>
-              Security Overview
-            </h3>
-
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
-              {securityItems.map((item, idx) => {
-                const SecIcon = item.icon;
-                return (
-                  <div key={idx} className="flex items-center justify-between py-3.5 hover:bg-slate-50/30 dark:hover:bg-slate-700/30 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
-                        <SecIcon size={14} />
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-[11px] font-bold text-slate-750 dark:text-slate-200 leading-snug group-hover:text-[#FA5A24] transition-colors">{item.title}</h4>
-                        <span className="text-[9px] text-slate-400 font-semibold block truncate leading-none mt-0.5">{item.subtext}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold ${item.badgeClass}`}>
-                        {item.badge}
-                      </span>
-                      <ChevronRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button 
-              onClick={() => setActiveModal('Security Settings')}
-              className="w-full text-center border border-[#FA5A24] text-[#FA5A24] text-xs font-bold py-2.5 rounded-xl hover:bg-[#FFF5F1]/30 transition-all mt-4 cursor-pointer"
-            >
-              Manage Security
-            </button>
-          </div>
-
+          ))}
         </div>
-
+        <div className="mt-2"><Msg m={sMsg} /></div>
       </div>
 
-      {/* Settings Edit Modal Drawer */}
-      {activeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/50 backdrop-blur-[6px] p-4 transition-all duration-300 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700/60 flex flex-col gap-5 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: 'Outfit' }}>
-                {activeModal}
-              </h3>
-              <button 
-                onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      <div className={card}>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100">Two-factor authentication</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Not available yet. Your account is protected by your password, login rate limiting and the sessions list above.</p>
+      </div>
+    </div>
+  );
+}
 
-            {/* Dynamic Modal Content by Section */}
-            {activeModal === 'Website Settings' && (
-              <div className="space-y-4 text-xs font-semibold">
-                <div>
-                  <label className="text-slate-600 dark:text-slate-300 block mb-1">Website Title / Brand</label>
-                  <input 
-                    type="text" 
-                    defaultValue={settingsData.siteName}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, siteName: e.target.value }))}
-                    className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 p-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none"
-                  />
-                </div>
-                <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700">
-                  <div>
-                    <span className="text-slate-700 dark:text-slate-200 block">Maintenance Mode</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Temporarily disable customer web access</span>
-                  </div>
-                  <input 
-                    type="checkbox"
-                    checked={settingsData.maintenanceMode}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, maintenanceMode: e.target.checked }))}
-                    className="w-5 h-5 accent-[#FA5A24] cursor-pointer"
-                  />
-                </div>
-              </div>
-            )}
+// ---------------- Platform settings (super admin) ----------------
+function PlatformTab() {
+  const [s, setS] = useState(null); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(null);
+  useEffect(() => { api('/settings').then((r) => setS(r.data)).catch((e) => setMsg({ ok: false, text: e.message })); }, []);
+  if (!s) return <div className={card}><Msg m={msg} />{!msg && <p className="text-sm text-slate-400">Loading…</p>}</div>;
 
-            {activeModal === 'Notification Settings' && (
-              <div className="space-y-4 text-xs font-semibold">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
-                  <span className="text-slate-700 dark:text-slate-200">Email Notifications</span>
-                  <input 
-                    type="checkbox"
-                    checked={settingsData.emailNotifications}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, emailNotifications: e.target.checked }))}
-                    className="w-5 h-5 accent-[#FA5A24] cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
-                  <span className="text-slate-700 dark:text-slate-200">SMS Alerts</span>
-                  <input 
-                    type="checkbox"
-                    checked={settingsData.smsNotifications}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, smsNotifications: e.target.checked }))}
-                    className="w-5 h-5 accent-[#FA5A24] cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-slate-700 dark:text-slate-200">Push Notifications</span>
-                  <input 
-                    type="checkbox"
-                    checked={settingsData.pushNotifications}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, pushNotifications: e.target.checked }))}
-                    className="w-5 h-5 accent-[#FA5A24] cursor-pointer"
-                  />
-                </div>
-              </div>
-            )}
+  const save = async () => {
+    if (s.maintenanceMode && !window.confirm('Maintenance mode will block the user app, astrologer app and website API for everyone except admins. Continue?')) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await api('/settings', { method: 'PUT', body: { maintenanceMode: s.maintenanceMode, maintenanceMessage: s.maintenanceMessage, supportEmail: s.supportEmail, supportPhone: s.supportPhone, minWithdrawal: Number(s.minWithdrawal) } });
+      setS(r.data); setMsg({ ok: true, text: 'Settings saved and applied.' });
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
+    setBusy(false);
+  };
 
-            {activeModal === 'Security Settings' && (
-              <div className="space-y-4 text-xs font-semibold">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
-                  <div>
-                    <span className="text-slate-700 dark:text-slate-200 block">Two-Factor Authentication (2FA)</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Require SMS/Authenticator code on login</span>
-                  </div>
-                  <input 
-                    type="checkbox"
-                    checked={settingsData.twoFactorAuth}
-                    onChange={(e) => setSettingsData(prev => ({ ...prev, twoFactorAuth: e.target.checked }))}
-                    className="w-5 h-5 accent-[#FA5A24] cursor-pointer"
-                  />
-                </div>
-                <div className="pt-2">
-                  <span className="text-slate-600 dark:text-slate-300 block mb-1">Session Timeout</span>
-                  <select className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 p-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none">
-                    <option>15 Minutes</option>
-                    <option>30 Minutes</option>
-                    <option>1 Hour</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {(activeModal !== 'Website Settings' && activeModal !== 'Notification Settings' && activeModal !== 'Security Settings') && (
-              <div className="space-y-4 text-xs font-semibold">
-                <div>
-                  <label className="text-slate-600 dark:text-slate-300 block mb-1">Preferences</label>
-                  <input 
-                    type="text" 
-                    defaultValue="Default Configuration"
-                    className="w-full bg-[#FCFAF8] dark:bg-slate-700 text-slate-800 dark:text-slate-100 p-3 rounded-xl border border-slate-200 dark:border-slate-600 outline-none"
-                  />
-                </div>
-                <div className="bg-[#FFF5F1] dark:bg-slate-700/50 p-3.5 rounded-xl border border-orange-100 dark:border-slate-600 text-[11px] text-slate-600 dark:text-slate-300">
-                  Update settings configuration for {activeModal}.
-                </div>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-              <button 
-                onClick={() => setActiveModal(null)}
-                className="px-5 py-2.5 text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handleSaveSetting({})}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#FA5A24] hover:bg-orange-600 rounded-xl shadow-md cursor-pointer"
-              >
-                Save Changes
-              </button>
-            </div>
+  return (
+    <div className="space-y-4">
+      <div className={`${card} ${s.maintenanceMode ? 'border-amber-300 dark:border-amber-700' : ''}`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">Maintenance mode</h3>
+            <p className="text-xs text-slate-400 mt-0.5">When ON, the public API returns a "under maintenance" response to all users and astrologers. Admins and payment confirmations keep working. Live chats and calls already in progress are not cut off.</p>
           </div>
+          <label className="inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" checked={s.maintenanceMode} onChange={(e) => setS({ ...s, maintenanceMode: e.target.checked })} />
+            <div className="w-11 h-6 bg-slate-200 peer-checked:bg-amber-500 rounded-full relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-5" />
+          </label>
         </div>
-      )}
-
-      {/* Bottom Alert bar */}
-      <div className="bg-[#FFF5F1]/80 dark:bg-slate-800 border border-orange-100/50 dark:border-slate-700/60 p-3.5 rounded-2xl flex items-center gap-3 shadow-sm select-none">
-        <Info size={16} className="text-[#FA5A24] flex-shrink-0" />
-        <span className="text-[11px] md:text-xs text-slate-600 dark:text-slate-300 font-medium leading-normal">
-          Settings are applied across the entire system.
-        </span>
+        <div className="mt-4 max-w-xl"><Label>Message shown to users</Label><input className={input} maxLength={200} value={s.maintenanceMessage} onChange={(e) => setS({ ...s, maintenanceMessage: e.target.value })} /></div>
+        {s.maintenanceMode && <p className="mt-3 text-xs font-bold text-amber-600">Maintenance mode is currently {s.maintenanceMode ? 'selected ON' : 'off'}. Save to apply.</p>}
       </div>
 
+      <div className={card}>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-3">Support contact & withdrawals</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
+          <div><Label>Support email</Label><input className={input} value={s.supportEmail} placeholder="help@yourdomain.com" onChange={(e) => setS({ ...s, supportEmail: e.target.value })} /></div>
+          <div><Label>Support phone</Label><input className={input} value={s.supportPhone} placeholder="+91 …" onChange={(e) => setS({ ...s, supportPhone: e.target.value })} /></div>
+          <div><Label>Minimum withdrawal (₹)</Label><input type="number" min={100} className={input} value={s.minWithdrawal} onChange={(e) => setS({ ...s, minWithdrawal: e.target.value })} /><p className="text-[11px] text-slate-400 mt-1">Applied when astrologers request a payout. Minimum allowed: ₹100.</p></div>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-3">Support contact is published at <span className="font-mono">/api/settings/public</span> for the apps to display.</p>
+      </div>
+
+      <div className="flex items-center gap-4"><button className={btn} disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save platform settings'}</button><Msg m={msg} /></div>
+    </div>
+  );
+}
+
+// ---------------- System & payments (super admin, read-only) ----------------
+function SystemTab() {
+  const [d, setD] = useState(null); const [err, setErr] = useState('');
+  const load = useCallback(() => { setErr(''); api('/system-info').then((r) => setD(r.data)).catch((e) => setErr(e.message)); }, []);
+  useEffect(() => { load(); }, [load]);
+  if (err) return <div className={card}><p className="text-sm text-red-500 font-semibold">{err}</p></div>;
+  if (!d) return <div className={card}><p className="text-sm text-slate-400">Loading…</p></div>;
+
+  const Row = ({ k, v, good }) => (
+    <div className="flex items-center justify-between py-2 text-sm"><span className="text-slate-500 dark:text-slate-400">{k}</span><span className={`font-semibold ${good === true ? 'text-emerald-600' : good === false ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}`}>{v}</span></div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end"><button onClick={load} className="text-xs font-bold text-[#FA5A24] hover:underline">Refresh</button></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className={card}>
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1">Payment gateway</h3>
+          <Row k="Gateway" v={d.payments.gateway} />
+          <Row k="Mode" v={d.payments.mode === 'live' ? 'LIVE (real money)' : d.payments.mode === 'test' ? 'TEST (no real money)' : d.payments.mode} good={d.payments.mode === 'live'} />
+          <Row k="Key ID" v={d.payments.keyId || 'Not set'} />
+          <Row k="Webhook secret" v={d.payments.webhookSecretConfigured ? 'Configured' : 'Missing'} good={d.payments.webhookSecretConfigured} />
+          {d.payments.mode === 'test' && <p className="mt-2 text-xs font-semibold text-amber-600">The server is using Razorpay TEST keys, so user deposits are not real payments.</p>}
+        </div>
+        <div className={card}>
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1">Server</h3>
+          <Row k="Environment" v={d.server.environment} />
+          <Row k="Node.js" v={d.server.nodeVersion} />
+          <Row k="Uptime" v={fmtUptime(d.server.uptimeSeconds)} />
+          <Row k="Memory" v={`${d.server.memoryMB} MB`} />
+          <Row k="Server time" v={fmtDate(d.server.serverTime)} />
+        </div>
+        <div className={card}>
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1">Database & cache</h3>
+          <Row k="MongoDB" v={d.database.status} good={d.database.status === 'connected'} />
+          <Row k="Registered users" v={d.database.users ?? '—'} />
+          <Row k="Astrologers" v={d.database.astrologers ?? '—'} />
+          <Row k="Redis" v={d.redis.status} good={d.redis.status === 'connected'} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------- Team & roles summary (super admin) ----------------
+function TeamTab() {
+  const navigate = useNavigate();
+  const [team, setTeam] = useState(null); const [roles, setRoles] = useState(null); const [err, setErr] = useState('');
+  useEffect(() => {
+    Promise.all([api('/team'), api('/roles')]).then(([t, r]) => { setTeam(t.data); setRoles(r.data); }).catch((e) => setErr(e.message));
+  }, []);
+  if (err) return <div className={card}><p className="text-sm text-red-500 font-semibold">{err}</p></div>;
+  if (!team) return <div className={card}><p className="text-sm text-slate-400">Loading…</p></div>;
+  const subs = team.filter((m) => m.role !== 'superadmin');
+  const Stat = ({ n, l }) => <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 p-4"><div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{n}</div><div className="text-xs text-slate-400">{l}</div></div>;
+  return (
+    <div className={card}>
+      <h3 className="font-bold text-slate-800 dark:text-slate-100">Team & roles</h3>
+      <p className="text-xs text-slate-400 mb-4">Only the super admin can add sub-admins, create roles and choose what each person can see or do.</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <Stat n={subs.length} l="Sub-admins" /><Stat n={subs.filter((m) => m.status === 'active').length} l="Active" />
+        <Stat n={subs.filter((m) => m.status === 'disabled').length} l="Disabled" /><Stat n={roles.length} l="Custom roles" />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button className={btn} onClick={() => navigate('/team')}>Manage team members</button>
+        <button className={btn} onClick={() => navigate('/roles')}>Manage roles & permissions</button>
+        <button className={btn} onClick={() => navigate('/audit-log')}>View audit log</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------- Page ----------------
+export default function SettingsPage() {
+  const [params, setParams] = useSearchParams();
+  const [admin, setAdmin] = useState(getAdmin());
+  const superAdmin = isSuperAdmin();
+
+  useEffect(() => {
+    const sync = () => setAdmin(getAdmin());
+    window.addEventListener(PROFILE_UPDATED_EVENT, sync);
+    refreshProfile();
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, sync);
+  }, []);
+
+  const tabs = useMemo(() => [
+    { id: 'profile', label: 'My Profile' },
+    { id: 'access', label: 'My Access' },
+    { id: 'security', label: 'Security' },
+    ...(superAdmin ? [{ id: 'platform', label: 'Platform' }, { id: 'system', label: 'System & Payments' }, { id: 'team', label: 'Team & Roles' }] : [])
+  ], [superAdmin]);
+
+  const active = tabs.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'profile';
+  if (!admin) return null;
+
+  return (
+    <div className="flex flex-col gap-5 w-full pb-8">
+      <div>
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight" style={{ fontFamily: 'Outfit' }}>Settings</h1>
+        <p className="text-xs md:text-sm text-slate-400 font-medium">{superAdmin ? 'Your account, platform configuration and system status.' : 'Your account, access and security.'}</p>
+      </div>
+      <div className="flex gap-2 overflow-x-auto">
+        {tabs.map((t) => (
+          <button key={t.id} onClick={() => setParams({ tab: t.id })}
+            className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap border ${active === t.id ? 'bg-[#FA5A24] border-[#FA5A24] text-white' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{t.label}</button>
+        ))}
+      </div>
+      {active === 'profile' && <ProfileTab admin={admin} />}
+      {active === 'access' && <AccessTab admin={admin} />}
+      {active === 'security' && <SecurityTab admin={admin} />}
+      {active === 'platform' && superAdmin && <PlatformTab />}
+      {active === 'system' && superAdmin && <SystemTab />}
+      {active === 'team' && superAdmin && <TeamTab />}
     </div>
   );
 }

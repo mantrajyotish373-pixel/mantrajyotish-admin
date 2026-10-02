@@ -25,8 +25,6 @@ import LoginPage from './pages/LoginPage';
 import TeamPage from './pages/TeamPage';
 import RolesPage from './pages/RolesPage';
 import AuditLogPage from './pages/AuditLogPage';
-import EditProfilePage from './pages/EditProfilePage';
-import ViewProfilePage from './pages/ViewProfilePage';
 import InterviewsPage from './pages/InterviewsPage';
 import AdminInterviewRoom from './pages/AdminInterviewRoom';
 
@@ -332,8 +330,8 @@ function App() {
                     <Route path="/roles" element={<RolesPage />} />
                     <Route path="/audit-log" element={<AuditLogPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/edit-profile" element={<EditProfilePage />} />
-                    <Route path="/view-profile" element={<ViewProfilePage />} />
+                    <Route path="/edit-profile" element={<Navigate to="/settings?tab=profile" replace />} />
+                    <Route path="/view-profile" element={<Navigate to="/settings?tab=profile" replace />} />
                     <Route
                       path="/logout"
                       element={
