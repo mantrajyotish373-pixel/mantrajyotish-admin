@@ -165,7 +165,7 @@ function PlatformTab() {
     if (s.maintenanceMode && !window.confirm('Maintenance mode will block the user app, astrologer app and website API for everyone except admins. Continue?')) return;
     setBusy(true); setMsg(null);
     try {
-      const r = await api('/settings', { method: 'PUT', body: { maintenanceMode: s.maintenanceMode, maintenanceMessage: s.maintenanceMessage, supportEmail: s.supportEmail, supportPhone: s.supportPhone, minWithdrawal: Number(s.minWithdrawal) } });
+      const r = await api('/settings', { method: 'PUT', body: { maintenanceMode: s.maintenanceMode, maintenanceMessage: s.maintenanceMessage, supportEmail: s.supportEmail, supportPhone: s.supportPhone, termsUrl: s.termsUrl || '', privacyPolicyUrl: s.privacyPolicyUrl || '', aboutText: s.aboutText || '', minWithdrawal: Number(s.minWithdrawal) } });
       setS(r.data); setMsg({ ok: true, text: 'Settings saved and applied.' });
     } catch (e) { setMsg({ ok: false, text: e.message }); }
     setBusy(false);
@@ -196,6 +196,16 @@ function PlatformTab() {
           <div><Label>Minimum withdrawal (₹)</Label><input type="number" min={100} className={input} value={s.minWithdrawal} onChange={(e) => setS({ ...s, minWithdrawal: e.target.value })} /><p className="text-[11px] text-slate-400 mt-1">Applied when astrologers request a payout. Minimum allowed: ₹100.</p></div>
         </div>
         <p className="text-[11px] text-slate-400 mt-3">Support contact is published at <span className="font-mono">/api/settings/public</span> for the apps to display.</p>
+      </div>
+
+      <div className={card}>
+        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-3">User app: About & legal</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+          <div><Label>Terms & Conditions link</Label><input className={input} value={s.termsUrl || ''} placeholder="https://yourdomain.com/terms" onChange={(e) => setS({ ...s, termsUrl: e.target.value })} /></div>
+          <div><Label>Privacy Policy link</Label><input className={input} value={s.privacyPolicyUrl || ''} placeholder="https://yourdomain.com/privacy" onChange={(e) => setS({ ...s, privacyPolicyUrl: e.target.value })} /></div>
+        </div>
+        <div className="mt-4 max-w-3xl"><Label>About text</Label><textarea className={input} rows={3} maxLength={500} value={s.aboutText || ''} placeholder="A short line about the app, shown in Settings > About" onChange={(e) => setS({ ...s, aboutText: e.target.value })} /></div>
+        <p className="text-[11px] text-slate-400 mt-3">Links must start with https://. Support email and phone above are shown here too. Users see changes the next time they open Settings.</p>
       </div>
 
       <div className="flex items-center gap-4"><button className={btn} disabled={busy} onClick={save}>{busy ? 'Saving…' : 'Save platform settings'}</button><Msg m={msg} /></div>

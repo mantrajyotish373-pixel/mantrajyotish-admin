@@ -20,7 +20,7 @@ export const ROUTE_PERMISSIONS = [
   { prefix: '/promotions', perm: 'promotions.view' },
   { prefix: '/coupons', perm: 'promotions.view' },
   { prefix: '/promo-payouts', perm: 'promopayouts.view' },
-  { prefix: '/banner-management', perm: 'banners.manage' },
+  { prefix: '/banner-management', perm: 'banners.view' },
   { prefix: '/add-money-settings', perm: 'addmoney.view' },
   { prefix: '/store', perm: 'store.view' },
   { prefix: '/planet-insights', perm: 'planets.view' },

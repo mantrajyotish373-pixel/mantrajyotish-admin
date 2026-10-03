@@ -25,7 +25,8 @@ import {
   Orbit,
   WalletCards,
   ReceiptText,
-  LifeBuoy
+  LifeBuoy,
+  Image as ImageIcon
 } from 'lucide-react';
 import { can, isSuperAdmin } from '../config/authSession';
 
@@ -152,6 +153,7 @@ const Sidebar = () => {
         { id: 'Reviews', label: 'Reviews', icon: Star, path: '/reviews', perm: 'reviews.view' },
         { id: 'Offers', label: 'Offers & Bonus', icon: Ticket, path: '/promotions', perm: 'promotions.view' },
         { id: 'Promo Payouts', label: 'Promo Payouts', icon: IndianRupee, path: '/promo-payouts', perm: 'promopayouts.view' },
+        { id: 'Banner Management', label: 'Banners', icon: ImageIcon, path: '/banner-management', perm: 'banners.view' },
         { id: 'Add Money Settings', label: 'Add Money Settings', icon: WalletCards, path: '/add-money-settings', perm: 'addmoney.view' },
         { id: 'Astro Store', label: 'Astro Store', icon: ShoppingBag, path: '/store', perm: 'store.view' },
         { id: 'Planetary Insights', label: 'Planetary Insights', icon: Orbit, path: '/planet-insights', perm: 'planets.view' },
